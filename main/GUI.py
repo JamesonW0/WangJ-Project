@@ -1,6 +1,7 @@
 import numpy as np
 import pygame
 import sys
+import os
 import tkinter
 from tkinter import filedialog
 from tkinter import messagebox
@@ -66,6 +67,7 @@ class GUI:
             self.buttons.add(Button((1230, 160), Colours['black'], 'New Training', 'tp', 'New Training'))
             self.buttons.add(Button((1230, 450), Colours['black'], 'Evaluate', 'tp', 'Evaluate'))
             self.buttons.add(Button((1230, 740), Colours['black'], 'Just Play', 'tp', 'Just Play'))
+            self.tracks = GUI.get_tracks()
         # end procedure
 
         def draw(self):
@@ -129,19 +131,45 @@ class GUI:
         """All pop up windows, using tkinter"""
 
         if command == 'im':  # import
+            tkinter.Tk().withdraw()  # hide the tk main window
             # validation process is done by tkinter using filetypes parameter
             validation = {'img': [('Image File', '*.png'), ('Image File', '*.jpg')], 'txt': [('Text File', '*.txt')]}
-            tkinter.Tk().withdraw()
             file_path = filedialog.askopenfilename(title='Select a file', filetypes=validation[action])
             if len(file_path) == 0:
                 GUI.pop_ups('sem', 'no_file')
             # end if
         elif command == 'sem':  # show error message
+            tkinter.Tk().withdraw()  # hide the tk main window
             # actions contain what error message to show given the action
-            actions = {'no_file': 'Please select a file'}
+            actions = {'no_file': 'Please select a file',
+                       'track_overflow': 'More than 5 tracks, only the first 5 will be shown',
+                       'track_underflow': 'No tracks found, please import a track'}
             tkinter.messagebox.showerror('Error', actions[action])
         # end if
     # end procedure
+
+    @staticmethod
+    def get_tracks():
+        """Get all tracks from the tracks folder, display a error message if more than 5 tracks are found"""
+        tracks = []
+        # find file in tracks folder, that start with 'track', end with image extension, length 10
+        for file in os.listdir('tracks'):
+            if file.endswith('.png') or file.endswith('.jpg') and file.startswith('track') and len(file) == 10:
+                # validation
+                try:
+                    int(file[5])
+                except ValueError:
+                    continue
+                tracks.append(file)
+            # end if
+        # next file
+        # sort tracks according to the 6th (python index 5) digit of the file name
+        tracks.sort(key=lambda x: int(x[5]))
+        if len(tracks) > 5:  # only show 5 tracks, and show an error message if there are more than 5 tracks
+            tracks = tracks[:5]
+            GUI.pop_ups('sem', 'track_overflow')
+        return tracks
+    # end function
 # end class
 
 
