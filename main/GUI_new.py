@@ -7,7 +7,8 @@ from tkinter import messagebox
 import shutil
 from configparser import ConfigParser
 
-pygame.init()  # Initialize pygame, must done at the beginning, before any other pygame function
+# Initialize pygame, must done at the beginning, before any other pygame function
+pygame.init()
 # colour dictionary, RGB values, no alpha channel, use set_alpha instead
 Colours = {'black': (0, 0, 0), 'white': (255, 255, 255), 'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
            'light_blue': (143, 170, 220)}
@@ -21,25 +22,28 @@ class GUI:
     """All the GUI elements of the program"""
 
     def __init__(self, width, height):
+        # set screen size
         self.screen = pygame.display.set_mode((width, height))
         # actions of tp command, value will be used in eval()
-        self.clock = pygame.time.Clock()
         # buttons should be drawn at the end, to make sure no buttons are covered by other images
-        self.buttons = []
-        self.drawings = []
+        self.buttons = []  # list of buttons, append button objects
+        self.drawings = []  # list of drawings, append drawing strings (will be eval()'ed)
         self.images = []  # (image_path, size, centre)
         self.texts = []  # (text, font, colour,centre)
+        # tp command, value will be used in eval()
         self.to_page = {'Home': 'self.set_home_page()', 'Start': 'self.set_start_page()',
                         'Tracks': 'self.set_tracks_page()', 'Settings_new': 'self.set_settings_page(True)'}
         self.import_options = {'Img': 'self.import_file("img")', 'Txt': 'self.import_file("txt")'}
+        # set current page to home page
         self.set_home_page()
-
     # end procedure
 
     def update(self, mouse_pos):
+        # check if any buttons are clicked
         for button in self.buttons:
             if button.update(mouse_pos):
-                action = button.clicked()
+                action = button.clicked()  # if clicked, get action
+                # evaluate action
                 if action[:2] == 'tp':  # to page
                     eval(self.to_page[action[2:]])
                 elif action[:2] == 'im':  # import file
@@ -48,25 +52,38 @@ class GUI:
                     exec(action[2:])
                 elif action[:2] == 'ev':  # show text
                     eval(action[2:])
+                # end if
+            # end if
+        # next button
+    # end procedure
 
     def draw(self):
+        # always fill the background first
         self.screen.fill(Colours['white'])
+        # draw all buttons
         for button in self.buttons:
             button.draw()
+        # next button
+        # draw all drawings
         for drawing in self.drawings:
             eval(drawing)
+        # next drawing
+        # blit all images
         for image in self.images:
             image_obj = pygame.transform.scale(pygame.image.load(image[0]), image[1])
             image_rect = image_obj.get_rect()
             image_rect.center = image[2]
             self.screen.blit(image_obj, image_rect)
+        # next image
+        # draw all texts
         for text in self.texts:
             self.draw_text(text[0], text[1], text[2], self.screen, text[3])
-
+        # next text
     # end procedure
 
     def set_home_page(self):
         pygame.display.set_caption('Home')
+        # clear all buttons/drawings/images/texts from the previous page
         self.buttons.clear()
         self.drawings.clear()
         self.images.clear()
@@ -75,6 +92,7 @@ class GUI:
         self.buttons.append(Button(self.screen, (1230, 220), Colours['black'], 'Start', 'tpStart'))
         self.buttons.append(Button(self.screen, (1230, 650), Colours['black'], 'Tracks', 'tpTracks'))
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
+    # end procedure
 
     def set_start_page(self):
         pygame.display.set_caption('Start')
@@ -82,6 +100,7 @@ class GUI:
         self.drawings.clear()
         self.images.clear()
         self.texts.clear()
+        # get and add tracks to images list to be drawn
         self.get_tracks((525, 100), 100)
         self.buttons.append(Button(self.screen, (22, 877), None, '', 'tpHome', img_path='resources/home.png',
                                    img_size=(40, 40)))
@@ -90,6 +109,7 @@ class GUI:
         self.buttons.append(Button(self.screen, (1230, 740), Colours['black'], 'Just Play', 'tp'))
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 200), (1050, 200), 3)")
+    # end procedure
 
     def set_tracks_page(self):
         pygame.display.set_caption('Tracks')
@@ -97,6 +117,7 @@ class GUI:
         self.drawings.clear()
         self.images.clear()
         self.texts.clear()
+        # get and add tracks to images list to be drawn
         self.get_tracks((700, 280), 120, to_settings=True)
         self.buttons.append(Button(self.screen, (22, 877), None, '', 'tpHome', img_path='resources/home.png',
                                    img_size=(40, 40)))
@@ -104,6 +125,7 @@ class GUI:
             Button(self.screen, (700, 570), Colours['black'], 'Import', 'imImg', font=button_font_medium))
         self.texts.append(('Select a track to edit', text_font_large, Colours['black'], (700, 100)))
         self.texts.append(('Or import a new track', text_font_large, Colours['black'], (700, 500)))
+    # end procedure
 
     def set_checkpoints_page(self, track_name):
         pygame.display.set_caption('Edit checkpoints')
@@ -111,10 +133,12 @@ class GUI:
         self.drawings.clear()
         self.images.clear()
         self.texts.clear()
+        self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 70), (1400, 70), 3)")
+    # end procedure
 
     def get_tracks(self, centre, width, to_settings=False):
         """Get all tracks from the tracks folder, display a error message if more than 5 tracks are found"""
-        global text_font_medium
+        global text_font_medium  # get font from global scope
         tracks = []
         coords = []
         x = centre[0]
@@ -135,8 +159,9 @@ class GUI:
         if len(tracks) > 5:  # only show 5 tracks, and show an error message if there are more than 5 tracks
             tracks = tracks[:5]
             GUI.show_error('track_overflow')
-        if len(tracks) == 0:  # show error message if there are no tracks
+        elif len(tracks) == 0:  # show error message if there are no tracks
             GUI.show_error('track_underflow')
+        # end if
         track_num = len(tracks)
         track_num_div = track_num // 2
         if track_num % 2 == 1:
@@ -155,6 +180,7 @@ class GUI:
             self.images.append((os.path.join('tracks', tracks[i]), (width, width), coords[i]))
             self.texts.append((tracks[i][:6], text_font_medium, Colours['black'],
                                (coords[i][0], coords[i][1] + width / 2 + 20)))
+        # next i
         if not to_settings:
             self.images.append((os.path.join('resources', 'mask.png'), (1050, 700), (525, 550)))
             for i in range(len(coords)):
@@ -165,13 +191,15 @@ class GUI:
                 action = 'siself.images[-1] = (' + '"tracks/' + tracks[i] + '", ' + size + ', (525, 550))'
                 self.buttons.append(Button(self.screen, (coords[i][0], coords[i][1] + 17), None, '', action,
                                            img_path='resources/mask.png', img_size=(width, width + 34)))
+            # next i
         else:
             for i in range(len(coords)):
-                action = 'evself.set_settings_page("' + tracks[i] + '")'
+                action = 'evself.set_checkpoints_page("' + tracks[i] + '")'
                 self.buttons.append(Button(self.screen, (coords[i][0], coords[i][1] + 17), None, '', action,
                                            img_path='resources/mask.png', img_size=(width, width + 34)))
-
-    # end function
+            # next i
+        # end if
+    # end procedure
 
     def import_file(self, filetype):
         tkinter.Tk().withdraw()  # hide the tk main window
@@ -190,6 +218,8 @@ class GUI:
                     except ValueError:
                         continue
                     track_no.append(int(file[5]))
+                # end if
+            # next file
             if len(track_no) >= 5:
                 GUI.show_error('import_overflow')
             else:
@@ -200,6 +230,11 @@ class GUI:
                         file_name = 'track' + str(i) + file_path[-4:]
                         self.set_checkpoints_page(file_name)
                         break
+                    # end if
+                # next i
+            # end if
+        # end if
+    # end procedure
 
     @staticmethod
     def show_error(error_type):
@@ -210,34 +245,17 @@ class GUI:
                     'track_underflow': 'No tracks found, please import a track',
                     'import_overflow': 'More than 5 tracks exist, please delete them before importing'}
         tkinter.messagebox.showerror('Error', messages[error_type])
+    # end procedure
 
     @staticmethod
     def pop_ups(command, action):
         """All pop up windows, using tkinter, depreciated, waiting to be deleted"""
-
-        if command == 'im':  # import
-            tkinter.Tk().withdraw()  # hide the tk main window
-            # validation process is done by tkinter using filetypes parameter
-            validation = {'img': [('Image File', '*.png'), ('Image File', '*.jpg')], 'txt': [('Text File', '*.txt')]}
-            file_path = filedialog.askopenfilename(title='Select a file', filetypes=validation[action])
-            if len(file_path) == 0:
-                GUI.pop_ups('sem', 'no_file_selected')
-            # end if
-        elif command == 'sem':  # show error message
-            tkinter.Tk().withdraw()  # hide the tk main window
-            # messages contain what error message to show given the action
-            messages = {'no_file_selected': 'Please select a file',
-                        'track_overflow': 'More than 5 tracks, only the first 5 will be shown',
-                        'track_underflow': 'No tracks found, please import a track'}
-            tkinter.messagebox.showerror('Error', messages[action])
-        elif command == 'swm':  # show warning message (ask yes or no)
+        if command == 'swm':  # show warning message (ask yes or no)
             tkinter.Tk().withdraw()  # hide the tk main window
             # messages contain what warning message to show given the action
             messages = {'no_settings_found': 'No settings found. Do you want delete the track?'}
             return tkinter.messagebox.askyesno('Warning', messages[action])
         # end if
-
-    # end function
 
     @staticmethod
     def draw_text(text, font, colour, surface, centre):
@@ -246,6 +264,7 @@ class GUI:
         text_box = text_obj.get_rect()
         text_box.center = centre
         surface.blit(text_obj, text_box)
+    # end procedure
 
     @staticmethod
     def get_settings(track_name):
@@ -254,6 +273,7 @@ class GUI:
         print(file_path)
         if not os.path.isfile(file_path):
             pass
+# end class
 
 
 class Button:
@@ -274,7 +294,6 @@ class Button:
             self.rect = self.image.get_rect()  # text rect, name it rect for sprite group draw
             self.rect.center = centre
         # end if
-
     # end procedure
 
     def update(self, mouse_pos):
@@ -282,19 +301,15 @@ class Button:
             return True
         # end if
         return False
-
     # end function
 
     def draw(self):
         self.screen.blit(self.image, self.rect)
-
     # end procedure
 
     def clicked(self):
         return self.action
     # end function
-
-
 # end class
 
 
@@ -308,7 +323,6 @@ class Config:
             self.new_config()
         else:
             self.read_config()
-
     # end procedure
 
     def new_config(self):
@@ -334,12 +348,19 @@ class Config:
             'GENERATIONS': None,  # number of generations
             'FITNESS THRESHOLD': None,  # fitness threshold of the neural network, automatically filled by the program
         }
+    # end procedure
+
+    def read_config(self):
+        self.config_obj.read(self.config_path)
+    # end procedure
+# end class
 
 
 # game function
 def run():
     """Runs the GUI"""
     Interface = GUI(1400, 900)
+    clock = pygame.time.Clock()
     while True:
         # User input and control
         for event in pygame.event.get():
@@ -353,9 +374,8 @@ def run():
         # Drawing here
         Interface.draw()
         pygame.display.flip()  # flip the display to renew
+        clock.tick(60)  # limit the frame rate to 60
     # end while
-
-
 # end procedure
 
 
