@@ -7,13 +7,20 @@ from tkinter import messagebox
 import shutil
 from configparser import ConfigParser
 
+"""
+Development notes: now colours can be got by using tools from the toolbar, further amendments required to track_data
+dictionary (perhaps replace it with config file), consider a temporary array (class scale) to hold click data.
+Screenshot have not been taken for today's progress
+"""
+
 # Initialize pygame, must done at the beginning, before any other pygame function
 pygame.init()
 # colour dictionary, RGB values, no alpha channel, use set_alpha instead
 Colours = {'black': (0, 0, 0), 'white': (255, 255, 255), 'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
-           'light_blue': (143, 170, 220)}
+           'light_blue': (143, 170, 220), 'light_green': (112, 173, 71), 'light_red': (255, 60, 60)}
 button_font_large = pygame.font.Font('fonts/comicbd.ttf', 50)  # comic sans MS, size 50, bold
 button_font_medium = pygame.font.Font('fonts/comicbd.ttf', 35)  # comic sans MS, size 35, bold
+button_font_small = pygame.font.Font('fonts/comicbd.ttf', 25)  # comic sans MS, size 25, bold
 text_font_large = pygame.font.Font('fonts/times.ttf', 35)  # times new roman, size 35
 text_font_medium = pygame.font.Font('fonts/times.ttf', 25)  # times new roman, size 25
 
@@ -30,6 +37,9 @@ class GUI:
         self.drawings = []  # list of drawings, append drawing strings (will be eval()'ed)
         self.images = []  # (image_path, size, centre)
         self.texts = []  # (text, font, colour,centre)
+        self.cursor = 'Cursor'
+        self.track_data = {'track': pygame.image.load('resources/mask.png'), 'start': [], 'ratio': 1.0,
+                           'checkpoints': [], 'end': []}  # dictionary of track data
         # tp command, value will be used in eval()
         self.to_page = {'Home': 'self.set_home_page()', 'Start': 'self.set_start_page()',
                         'Tracks': 'self.set_tracks_page()', 'Settings_new': 'self.set_settings_page(True)'}
@@ -40,20 +50,27 @@ class GUI:
 
     def update(self, mouse_pos):
         # check if any buttons are clicked
-        for button in self.buttons:
-            if button.update(mouse_pos):
-                action = button.clicked()  # if clicked, get action
-                # evaluate action
-                if action[:2] == 'tp':  # to page
-                    eval(self.to_page[action[2:]])
-                elif action[:2] == 'im':  # import file
-                    eval(self.import_options[action[2:]])
-                elif action[:2] == 'si':  # show image
-                    exec(action[2:])
-                elif action[:2] == 'ev':  # show text
-                    eval(action[2:])
+        if self.cursor != 'Cursor':
+            if self.buttons[0].update(mouse_pos):
+                pixel_colour = self.screen.get_at(mouse_pos)
+                print(pixel_colour)
+        else:
+            for button in self.buttons:
+                if button.update(mouse_pos):
+                    action = button.clicked()  # if clicked, get action
+                    # evaluate action
+                    if action[:2] == 'tp':  # to page
+                        eval(self.to_page[action[2:]])
+                    elif action[:2] == 'im':  # import file
+                        eval(self.import_options[action[2:]])
+                    elif action[:2] == 'si':  # show image
+                        exec(action[2:])
+                    elif action[:2] == 'ev':  # show text
+                        eval(action[2:])
+                    elif action[:2] == 'tl':  # set cursor to a selected tool
+                        self.cursor = action[2:]
+                    # end if
                 # end if
-            # end if
         # next button
     # end procedure
 
@@ -104,6 +121,7 @@ class GUI:
         self.get_tracks((525, 100), 100)
         self.buttons.append(Button(self.screen, (22, 877), None, '', 'tpHome', img_path='resources/home.png',
                                    img_size=(40, 40)))
+        # button command to be fill after the simulator is created
         self.buttons.append(Button(self.screen, (1230, 160), Colours['black'], 'New Training', 'tp'))
         self.buttons.append(Button(self.screen, (1230, 450), Colours['black'], 'Evaluate', 'tp'))
         self.buttons.append(Button(self.screen, (1230, 740), Colours['black'], 'Just Play', 'tp'))
@@ -133,7 +151,20 @@ class GUI:
         self.drawings.clear()
         self.images.clear()
         self.texts.clear()
+        # treat track as a button, this button must be the first button in the list buttons
+        track = pygame.image.load(os.path.join('tracks', track_name))
+        size = track.get_size()
+        self.track_data['ratio'] = min(1200 / size[0], 820 / size[1])
+        size = (int(size[0] * self.track_data['ratio']), int(size[1] * self.track_data['ratio']))
+        self.track_data['track'] = pygame.transform.scale(track, size)
+        self.buttons.append(Button(self.screen, (600, 490), None, '', 'track',
+                                   img_path=os.path.join('tracks', track_name), img_size=size))
+        action = 'evself.set_settings_page("' + track_name + '")'
+        self.buttons.append(Button(self.screen, (930, 35), Colours['black'], 'Settings', action, font=button_font_small))
+        self.set_toolbar()
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 70), (1400, 70), 3)")
+        self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1200, 70), (1200, 900), 3)")
+        self.texts.append(('Checkpoints', button_font_small, Colours['light_green'], (460, 35)))
     # end procedure
 
     def get_tracks(self, centre, width, to_settings=False):
@@ -236,6 +267,19 @@ class GUI:
         # end if
     # end procedure
 
+    def set_toolbar(self):
+        tools = ['Starting Line', 'Checkpoints', 'Finish Line', 'Delete', 'Cursor']
+        for i in range(len(tools)):
+            # texts y value at 125, 283, 441, 599, 757
+            self.texts.append((tools[i], button_font_small, Colours['black'], (1300, 125 + i * 158)))
+            self.buttons.append(Button(self.screen, (1300, 150 + i * 158), None, '', 'tl'+tools[i],
+                                       img_path='resources/mask.png', img_size=(170, 80)))
+        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_green'], (1300, 170), 8)")
+        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_blue'], (1300, 328), 8)")
+        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_red'], (1300, 486), 8)")
+        self.images.append((os.path.join('resources', 'delete.png'), (40, 40), (1300, 635)))
+        self.images.append((os.path.join('resources', 'cursor.png'), (40, 40), (1300, 793)))
+
     @staticmethod
     def show_error(error_type):
         tkinter.Tk().withdraw()  # hide the tk main window
@@ -265,14 +309,6 @@ class GUI:
         text_box.center = centre
         surface.blit(text_obj, text_box)
     # end procedure
-
-    @staticmethod
-    def get_settings(track_name):
-        """Retrieve settings file correspond to a particular track from the settings folder"""
-        file_path = 'tracks/' + track_name[:6] + '.txt'
-        print(file_path)
-        if not os.path.isfile(file_path):
-            pass
 # end class
 
 
@@ -285,6 +321,7 @@ class Button:
             self.action = action
             self.image = pygame.image.load(img_path)
             self.image = pygame.transform.scale(self.image, img_size)
+            # self.image.set_alpha(100)  # for testing only
             self.rect = self.image.get_rect()  # image rect, name it rect for sprite group draw
             self.rect.center = centre
         else:  # if text button
@@ -319,17 +356,17 @@ class Config:
     def __init__(self, track_name):
         self.config_obj = ConfigParser()
         self.config_path = 'tracks/' + track_name[:6] + '.txt'
-        if not os.path.isfile(self.config_path):
-            self.new_config()
+        if self.check_validity(self.config_path):
+            self.config_obj.read(self.config_path)
         else:
-            self.read_config()
+            self.new_config()
     # end procedure
 
     def new_config(self):
         self.config_obj['CHECKPOINTS'] = {
             'START': None,  # (coordinate_1, coordinate_2)
             'FINISH': None,  # (coordinate, radius)
-            'CHECKPOINTS': [],  # [(coordinate, radius), (coordinate, radius), ...]
+            'CHECKPOINTS': None,  # [(coordinate, radius), (coordinate, radius), ...]
         }
         self.config_obj['TRACK'] = {
             'START ANGLE': None,  # automatically filled by the program, do not change
@@ -344,15 +381,27 @@ class Config:
             'LEARNING RATE': None,  # learning rate of the neural network
             'MUTATION RATE': None,  # mutation rate of the neural network
             'MOMENTUM': None,  # momentum of the neural network
+            'ACTIVATION': None,  # activation function of the neural network
             'POPULATION': None,  # number of neural networks in one generation, have to be even
             'GENERATIONS': None,  # number of generations
             'FITNESS THRESHOLD': None,  # fitness threshold of the neural network, automatically filled by the program
         }
     # end procedure
 
-    def read_config(self):
-        self.config_obj.read(self.config_path)
-    # end procedure
+    @staticmethod
+    def check_validity(file_path):
+        if not os.path.isfile(file_path):
+            return False
+        else:
+            config_obj = ConfigParser()
+            config_obj.read(file_path)
+            sections = config_obj.sections()
+            if 'CHECKPOINTS' not in sections or 'TRACK' not in sections or 'CAR' not in sections or 'NN' not in sections:
+                return False
+            else:
+                return True
+            # end if`
+    # end function
 # end class
 
 
