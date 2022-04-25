@@ -50,10 +50,12 @@ class GUI:
 
     def update(self, mouse_pos):
         # check if any buttons are clicked
-        if self.cursor != 'Cursor':
-            if self.buttons[0].update(mouse_pos):
-                pixel_colour = self.screen.get_at(mouse_pos)
-                print(pixel_colour)
+        # cursor status can only be changed at set checkpoints page, so will not affect other pages
+        if self.cursor != 'Cursor' and self.buttons[0].update(mouse_pos):
+            pixel_colour = self.screen.get_at(mouse_pos)
+            print(self.cursor)
+            print(pixel_colour)
+            print(mouse_pos)
         else:
             for button in self.buttons:
                 if button.update(mouse_pos):
@@ -364,27 +366,27 @@ class Config:
 
     def new_config(self):
         self.config_obj['CHECKPOINTS'] = {
-            'START': None,  # (coordinate_1, coordinate_2)
-            'FINISH': None,  # (coordinate, radius)
-            'CHECKPOINTS': None,  # [(coordinate, radius), (coordinate, radius), ...]
+            'START': ((0, 0), (0, 0)),  # (coordinate_1, coordinate_2)
+            'FINISH': ((0, 0), (0, 0)),  # (coordinate, radius)
+            'CHECKPOINTS': [],  # [(coordinate, radius), (coordinate, radius), ...]
         }
         self.config_obj['TRACK'] = {
-            'START ANGLE': None,  # automatically filled by the program, do not change
-            'MAX STEP': None,  # automatically filled by the program, only change when the training cannot be done
+            'START ANGLE': 0,  # automatically filled by the program, do not change
+            'MAX STEP': 0,  # automatically filled by the program, only change when the training cannot be done
         }
         self.config_obj['CAR'] = {
-            'SPEED RATIO': None,  # assume the length of the starting line is 1, enter distance the car can cover in 1s
-            'CAR RATIO': None,  # length of the car relative to the starting line, max 0.8
-            'TURNING ANGLE': None,  # angle the car can turn in degree, max 60
+            'SPEED RATIO': 0.0,  # assume the length of the starting line is 1, enter distance the car can cover in 1s
+            'CAR RATIO': 0.0,  # length of the car relative to the starting line, max 0.8
+            'TURNING ANGLE': 0,  # angle the car can turn in degree, max 60
         }
         self.config_obj['NN'] = {
-            'LEARNING RATE': None,  # learning rate of the neural network
-            'MUTATION RATE': None,  # mutation rate of the neural network
-            'MOMENTUM': None,  # momentum of the neural network
-            'ACTIVATION': None,  # activation function of the neural network
-            'POPULATION': None,  # number of neural networks in one generation, have to be even
-            'GENERATIONS': None,  # number of generations
-            'FITNESS THRESHOLD': None,  # fitness threshold of the neural network, automatically filled by the program
+            'LEARNING RATE': 0.05,  # learning rate of the neural network
+            'MUTATION RATE': 0.05,  # mutation rate of the neural network
+            'MOMENTUM': 0.9,  # momentum of the neural network
+            'ACTIVATION': 'tanh',  # activation function of the neural network
+            'POPULATION': 20,  # number of neural networks in one generation, have to be even
+            'GENERATIONS': 1000,  # number of generations
+            'FITNESS THRESHOLD': 0.0,  # fitness threshold of the neural network, automatically filled by the program
         }
     # end procedure
 
