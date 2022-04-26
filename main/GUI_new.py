@@ -6,6 +6,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 import shutil
 from configparser import ConfigParser
+import simulator
 
 """
 Development notes: now colours can be got by using tools from the toolbar, further amendments required to track_data
@@ -366,8 +367,8 @@ class Config:
 
     def new_config(self):
         self.config_obj['CHECKPOINTS'] = {
-            'START': ((0, 0), (0, 0)),  # (coordinate_1, coordinate_2)
-            'FINISH': ((0, 0), (0, 0)),  # (coordinate, radius)
+            'START': ((-1, -1), (-1, -1)),  # (coordinate_1, coordinate_2)
+            'FINISH': ((-1, -1), -1),  # (coordinate, radius)
             'CHECKPOINTS': [],  # [(coordinate, radius), (coordinate, radius), ...]
         }
         self.config_obj['TRACK'] = {
