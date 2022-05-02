@@ -9,9 +9,13 @@ from configparser import ConfigParser
 import simulator
 
 """
-Development notes: now colours can be got by using tools from the toolbar, further amendments required to track_data
-dictionary (perhaps replace it with config file), consider a temporary array (class scale) to hold click data.
-Screenshot have not been taken for today's progress
+2/5/22 note: finished the coords calculation for setting checkpoints, but there are various issues remain unsolved
+             currently i know: the midpoint is not showing at the place the it should be (much better), might be the 
+             converting algorithm's problem or a calculation issue; the find radius algorithm will show error 
+             message is rise or run is zero; only set starting point have been checked for errors, but not others;
+             haven't done delete point function and show points function and the cursor effect. 
+             
+             the radius problem is now partially solved. 
 """
 
 # Initialize pygame, must done at the beginning, before any other pygame function
@@ -39,8 +43,7 @@ class GUI:
         self.images = []  # (image_path, size, centre)
         self.texts = []  # (text, font, colour,centre)
         self.cursor = 'Cursor'
-        self.track_data = {'track': pygame.image.load('resources/mask.png'), 'start': [], 'ratio': 1.0,
-                           'checkpoints': [], 'end': []}  # dictionary of track data
+        self.track_config = None  # dictionary of track data
         # tp command, value will be used in eval()
         self.to_page = {'Home': 'self.set_home_page()', 'Start': 'self.set_start_page()',
                         'Tracks': 'self.set_tracks_page()', 'Settings_new': 'self.set_settings_page(True)'}
@@ -53,10 +56,19 @@ class GUI:
         # check if any buttons are clicked
         # cursor status can only be changed at set checkpoints page, so will not affect other pages
         if self.cursor != 'Cursor' and self.buttons[0].update(mouse_pos):
+            # delete all print statements after testing
             pixel_colour = self.screen.get_at(mouse_pos)
-            print(self.cursor)
             print(pixel_colour)
-            print(mouse_pos)
+            print(self.cursor)
+            if pixel_colour[:3] == (255, 255, 255):
+                self.show_error('point_not_on_track')
+            else:
+                any_error = self.track_config.add_point(self.cursor, mouse_pos)
+                if any_error is not None:
+                    self.show_error(any_error)
+            print(self.track_config.get_item('CHECKPOINTS', 'START'))
+            print(self.track_config.get_item('CHECKPOINTS', 'FINISH'))
+            print(self.track_config.get_item('CHECKPOINTS', 'CHECKPOINTS'))
         else:
             for button in self.buttons:
                 if button.update(mouse_pos):
@@ -99,6 +111,13 @@ class GUI:
         for text in self.texts:
             self.draw_text(text[0], text[1], text[2], self.screen, text[3])
         # next text
+        if self.track_config is not None:
+            coords = self.track_config.get_item('CHECKPOINTS', 'START')[0]
+            coords = (int(coords[0] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
+                          self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[0]),
+                      int(coords[1] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
+                          self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[1]))
+            pygame.draw.circle(self.screen, Colours['light_green'], coords, 8)
     # end procedure
 
     def set_home_page(self):
@@ -155,12 +174,12 @@ class GUI:
         self.images.clear()
         self.texts.clear()
         # treat track as a button, this button must be the first button in the list buttons
-        track = pygame.image.load(os.path.join('tracks', track_name))
-        size = track.get_size()
-        self.track_data['ratio'] = min(1200 / size[0], 820 / size[1])
-        size = (int(size[0] * self.track_data['ratio']), int(size[1] * self.track_data['ratio']))
-        self.track_data['track'] = pygame.transform.scale(track, size)
-        self.buttons.append(Button(self.screen, (600, 490), None, '', 'track',
+        self.track_config = simulator.Config(track_name)
+        size = self.track_config.get_item('TRACK', 'ORIGINAL SIZE')
+        ratio = self.track_config.get_item('TRACK', 'SETTINGS RATIO')
+        size = (int(size[0] * ratio), int(size[1] * ratio))
+        # the track is going to be a button, with centre (600, 485) and size optimized
+        self.buttons.append(Button(self.screen, (600, 485), None, '', 'track',
                                    img_path=os.path.join('tracks', track_name), img_size=size))
         action = 'evself.set_settings_page("' + track_name + '")'
         self.buttons.append(Button(self.screen, (930, 35), Colours['black'], 'Settings', action, font=button_font_small))
@@ -290,7 +309,11 @@ class GUI:
         messages = {'no_file_selected': 'Please select a file',
                     'track_overflow': 'More than 5 tracks, only the first 5 will be shown',
                     'track_underflow': 'No tracks found, please import a track',
-                    'import_overflow': 'More than 5 tracks exist, please delete them before importing'}
+                    'import_overflow': 'More than 5 tracks exist, please delete them before importing',
+                    'point_not_on_track': 'The point you selected is not on the track. Try again.',
+                    'starting_line_already_set': 'Please remove the current starting line before setting a new one',
+                    'finish_line_already_set': 'Please remove the current finish line before setting a new one',
+                    'cursor_mismatch': 'Please finish setting the current point before use another cursor', }
         tkinter.messagebox.showerror('Error', messages[error_type])
     # end procedure
 
@@ -324,6 +347,7 @@ class Button:
             self.action = action
             self.image = pygame.image.load(img_path)
             self.image = pygame.transform.scale(self.image, img_size)
+            self.image = self.image.convert_alpha()
             # self.image.set_alpha(100)  # for testing only
             self.rect = self.image.get_rect()  # image rect, name it rect for sprite group draw
             self.rect.center = centre
@@ -354,7 +378,7 @@ class Button:
 
 
 class Config:
-    """Read and write config file"""
+    """use the config class in simulator file instead"""
 
     def __init__(self, track_name):
         self.config_obj = ConfigParser()
@@ -417,7 +441,9 @@ def run():
         # User input and control
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                pygame.quit()
                 sys.exit()
+
             # end if
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 Interface.update(event.pos)
@@ -434,4 +460,5 @@ def run():
 # Main
 if __name__ == '__main__':
     run()
+
 # end if
