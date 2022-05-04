@@ -6,7 +6,7 @@ import pygame
 
 
 class Config:
-    """Read and write config file"""
+    """Reading and writing the config file"""
 
     def __init__(self, track_name):
         self.config_obj = ConfigParser()
@@ -14,7 +14,7 @@ class Config:
         self.track_name = track_name
         self.coordinates = [(-1, -1), (-1, -1)]
         self.last_cursor = None
-        self.img = Image.open(os.path.join('tracks', self.track_name)).convert('RGB')
+        self.img = Image.open(os.path.join('tracks', self.track_name))
         if self.check_validity(self.config_path):
             self.config_obj.read(self.config_path)
         else:
@@ -27,7 +27,7 @@ class Config:
         simulator_ratio = float(min(1200 / size[0], 820 / size[1]))  # change 1200 and 820 to the appropriate size later
         print((600 - size[0] * settings_ratio / 2, 485 - size[1] * settings_ratio / 2))  # needs to be deleted
         self.config_obj['CHECKPOINTS'] = {
-            'START': ((-1, -1), -1),  # (midpoint, radius)
+            'START': ((-1, -1), (-1, -1)),  # (midpoint, radius)
             'FINISH': ((-1, -1), -1),  # (midpoint, radius)
             'CHECKPOINTS': [],  # [(midpoint, radius), (midpoint, radius), ...]
         }
@@ -63,9 +63,9 @@ class Config:
         # detect if any errors occur, information returned shows which error is it
         if self.last_cursor is not None and self.last_cursor != cursor:
             return 'cursor_mismatch'
-        elif cursor == 'Starting Line' and self.get_item('CHECKPOINTS', 'START') != ((-1, -1), -1):
+        elif cursor == 'Starting Line' and self.get_item('CHECKPOINTS', 'START') != ((-1, -1), (-1,-1)):
             return 'starting_line_already_set'
-        elif cursor == 'Finish Line' and self.get_item('CHECKPOINTS', 'FINISH') != ((-1, -1), -1):
+        elif cursor == 'Finish Line' and self.get_item('CHECKPOINTS', 'FINISH') != ((-1, -1), (-1, -1)):
             return 'finish_line_already_set'
         # end if
         # set points given the cursor is not Delete
@@ -116,19 +116,20 @@ class Config:
             x += 1
             y = calculate_y(x)
             try:
-                colour = self.img.getpixel((int(x), int(y)))
+                colour = self.img.getpixel((int(x), int(y)))[:3]
             except IndexError:
                 colour = (255, 255, 255)
             # end try
         # end while
         coordinates_by_x.append((x, y))
         # decrease x to find the second coordinate
+        colour = (0, 0, 0)
         x = self.coordinates[0][0]
         while colour != (255, 255, 255):
             x -= 1
             y = calculate_y(x)
             try:
-                colour = self.img.getpixel((int(x), int(y)))
+                colour = self.img.getpixel((int(x), int(y)))[:3]
             except IndexError:
                 colour = (255, 255, 255)
             # end try
@@ -142,19 +143,20 @@ class Config:
             y += 1
             x = calculate_x(y)
             try:
-                colour = self.img.getpixel((int(x), int(y)))
+                colour = self.img.getpixel((int(x), int(y)))[:3]
             except IndexError:
                 colour = (255, 255, 255)
             # end try
         # end while
         coordinates_by_y.append((x, y))
         # decrease x to find the second coordinate
+        colour = (0, 0, 0)
         y = self.coordinates[0][1]
         while colour != (255, 255, 255):
             y -= 1
             x = calculate_x(y)
             try:
-                colour = self.img.getpixel((int(x), int(y)))
+                colour = self.img.getpixel((int(x), int(y)))[:3]
             except IndexError:
                 colour = (255, 255, 255)
             # end try
@@ -166,10 +168,18 @@ class Config:
                              pow(coordinates_by_y[0][1] - coordinates_by_y[1][1], 2))
         print(radius_square)
         if radius_square[0] < radius_square[1]:
+            print(((coordinates_by_x[0][0] - 1, calculate_y(coordinates_by_x[0][0] - 1),
+                    (coordinates_by_x[1][0] + 1, calculate_y(coordinates_by_x[1][0] + 1)))))
+            return (((coordinates_by_x[0][0] - 1, calculate_y(coordinates_by_x[0][0] - 1)),
+                     (coordinates_by_x[1][0] + 1, calculate_y(coordinates_by_x[1][0] + 1))))
             return (((coordinates_by_x[0][0] + coordinates_by_x[1][0]) / 2,
                      (calculate_y(coordinates_by_x[0][0] - 1) + calculate_y(coordinates_by_x[1][0] + 1)) / 2),
                     pow(radius_square[0], 0.5))
         else:
+            print(((calculate_x(coordinates_by_y[0][1] - 1), coordinates_by_y[0][1]),
+                   (calculate_x(coordinates_by_y[1][1] + 1), coordinates_by_y[1][1])))
+            return (((calculate_x(coordinates_by_y[0][1] - 1), coordinates_by_y[0][1]),
+                    (calculate_x(coordinates_by_y[1][1] + 1), coordinates_by_y[1][1])))
             return (((calculate_x(coordinates_by_y[0][1] - 1) + calculate_x(coordinates_by_y[1][1] + 1)) / 2,
                      (coordinates_by_y[0][1] + coordinates_by_y[1][1]) / 2), pow(radius_square[1], 0.5))
 

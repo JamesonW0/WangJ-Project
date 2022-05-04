@@ -50,6 +50,8 @@ class GUI:
         self.import_options = {'Img': 'self.import_file("img")', 'Txt': 'self.import_file("txt")'}
         # set current page to home page
         self.set_home_page()
+        self.temp = None
+
     # end procedure
 
     def update(self, mouse_pos):
@@ -87,6 +89,7 @@ class GUI:
                     # end if
                 # end if
         # next button
+
     # end procedure
 
     def draw(self):
@@ -113,11 +116,17 @@ class GUI:
         # next text
         if self.track_config is not None:
             coords = self.track_config.get_item('CHECKPOINTS', 'START')[0]
+            coords_2 = self.track_config.get_item('CHECKPOINTS', 'START')[1]
             coords = (int(coords[0] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
                           self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[0]),
                       int(coords[1] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
                           self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[1]))
-            pygame.draw.circle(self.screen, Colours['light_green'], coords, 8)
+            coords_2 = (int(coords_2[0] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
+                            self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[0]),
+                        int(coords_2[1] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
+                            self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[1]))
+            pygame.draw.circle(self.screen, Colours['light_red'], coords, 5)
+            pygame.draw.circle(self.screen, Colours['light_red'], coords_2, 5)
     # end procedure
 
     def set_home_page(self):
@@ -131,6 +140,7 @@ class GUI:
         self.buttons.append(Button(self.screen, (1230, 220), Colours['black'], 'Start', 'tpStart'))
         self.buttons.append(Button(self.screen, (1230, 650), Colours['black'], 'Tracks', 'tpTracks'))
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
+
     # end procedure
 
     def set_start_page(self):
@@ -149,6 +159,7 @@ class GUI:
         self.buttons.append(Button(self.screen, (1230, 740), Colours['black'], 'Just Play', 'tp'))
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 200), (1050, 200), 3)")
+
     # end procedure
 
     def set_tracks_page(self):
@@ -165,6 +176,7 @@ class GUI:
             Button(self.screen, (700, 570), Colours['black'], 'Import', 'imImg', font=button_font_medium))
         self.texts.append(('Select a track to edit', text_font_large, Colours['black'], (700, 100)))
         self.texts.append(('Or import a new track', text_font_large, Colours['black'], (700, 500)))
+
     # end procedure
 
     def set_checkpoints_page(self, track_name):
@@ -182,11 +194,13 @@ class GUI:
         self.buttons.append(Button(self.screen, (600, 485), None, '', 'track',
                                    img_path=os.path.join('tracks', track_name), img_size=size))
         action = 'evself.set_settings_page("' + track_name + '")'
-        self.buttons.append(Button(self.screen, (930, 35), Colours['black'], 'Settings', action, font=button_font_small))
+        self.buttons.append(
+            Button(self.screen, (930, 35), Colours['black'], 'Settings', action, font=button_font_small))
         self.set_toolbar()
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 70), (1400, 70), 3)")
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1200, 70), (1200, 900), 3)")
         self.texts.append(('Checkpoints', button_font_small, Colours['light_green'], (460, 35)))
+
     # end procedure
 
     def get_tracks(self, centre, width, to_settings=False):
@@ -252,6 +266,7 @@ class GUI:
                                            img_path='resources/mask.png', img_size=(width, width + 34)))
             # next i
         # end if
+
     # end procedure
 
     def import_file(self, filetype):
@@ -287,6 +302,7 @@ class GUI:
                 # next i
             # end if
         # end if
+
     # end procedure
 
     def set_toolbar(self):
@@ -294,7 +310,7 @@ class GUI:
         for i in range(len(tools)):
             # texts y value at 125, 283, 441, 599, 757
             self.texts.append((tools[i], button_font_small, Colours['black'], (1300, 125 + i * 158)))
-            self.buttons.append(Button(self.screen, (1300, 150 + i * 158), None, '', 'tl'+tools[i],
+            self.buttons.append(Button(self.screen, (1300, 150 + i * 158), None, '', 'tl' + tools[i],
                                        img_path='resources/mask.png', img_size=(170, 80)))
         self.drawings.append("pygame.draw.circle(self.screen, Colours['light_green'], (1300, 170), 8)")
         self.drawings.append("pygame.draw.circle(self.screen, Colours['light_blue'], (1300, 328), 8)")
@@ -315,6 +331,7 @@ class GUI:
                     'finish_line_already_set': 'Please remove the current finish line before setting a new one',
                     'cursor_mismatch': 'Please finish setting the current point before use another cursor', }
         tkinter.messagebox.showerror('Error', messages[error_type])
+
     # end procedure
 
     @staticmethod
@@ -335,6 +352,8 @@ class GUI:
         text_box.center = centre
         surface.blit(text_obj, text_box)
     # end procedure
+
+
 # end class
 
 
@@ -358,6 +377,7 @@ class Button:
             self.rect = self.image.get_rect()  # text rect, name it rect for sprite group draw
             self.rect.center = centre
         # end if
+
     # end procedure
 
     def update(self, mouse_pos):
@@ -365,15 +385,19 @@ class Button:
             return True
         # end if
         return False
+
     # end function
 
     def draw(self):
         self.screen.blit(self.image, self.rect)
+
     # end procedure
 
     def clicked(self):
         return self.action
     # end function
+
+
 # end class
 
 
@@ -387,6 +411,7 @@ class Config:
             self.config_obj.read(self.config_path)
         else:
             self.new_config()
+
     # end procedure
 
     def new_config(self):
@@ -413,6 +438,7 @@ class Config:
             'GENERATIONS': 1000,  # number of generations
             'FITNESS THRESHOLD': 0.0,  # fitness threshold of the neural network, automatically filled by the program
         }
+
     # end procedure
 
     @staticmethod
@@ -429,6 +455,8 @@ class Config:
                 return True
             # end if`
     # end function
+
+
 # end class
 
 
@@ -454,6 +482,8 @@ def run():
         pygame.display.flip()  # flip the display to renew
         clock.tick(60)  # limit the frame rate to 60
     # end while
+
+
 # end procedure
 
 
