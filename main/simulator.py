@@ -27,7 +27,7 @@ class Config:
         simulator_ratio = float(min(1200 / size[0], 820 / size[1]))  # change 1200 and 820 to the appropriate size later
         print((600 - size[0] * settings_ratio / 2, 485 - size[1] * settings_ratio / 2))  # needs to be deleted
         self.config_obj['CHECKPOINTS'] = {
-            'START': ((-1, -1), (-1, -1)),  # (midpoint, radius)
+            'START': ((-1, -1), -1),  # (midpoint, radius)
             'FINISH': ((-1, -1), -1),  # (midpoint, radius)
             'CHECKPOINTS': [],  # [(midpoint, radius), (midpoint, radius), ...]
         }
@@ -168,18 +168,18 @@ class Config:
                              pow(coordinates_by_y[0][1] - coordinates_by_y[1][1], 2))
         print(radius_square)
         if radius_square[0] < radius_square[1]:
-            print(((coordinates_by_x[0][0] - 1, calculate_y(coordinates_by_x[0][0] - 1),
-                    (coordinates_by_x[1][0] + 1, calculate_y(coordinates_by_x[1][0] + 1)))))
-            return (((coordinates_by_x[0][0] - 1, calculate_y(coordinates_by_x[0][0] - 1)),
+            """
+            testing code to see two end points: (((coordinates_by_x[0][0] - 1, calculate_y(coordinates_by_x[0][0] - 1)),
                      (coordinates_by_x[1][0] + 1, calculate_y(coordinates_by_x[1][0] + 1))))
+            """
             return (((coordinates_by_x[0][0] + coordinates_by_x[1][0]) / 2,
                      (calculate_y(coordinates_by_x[0][0] - 1) + calculate_y(coordinates_by_x[1][0] + 1)) / 2),
                     pow(radius_square[0], 0.5))
         else:
-            print(((calculate_x(coordinates_by_y[0][1] - 1), coordinates_by_y[0][1]),
-                   (calculate_x(coordinates_by_y[1][1] + 1), coordinates_by_y[1][1])))
-            return (((calculate_x(coordinates_by_y[0][1] - 1), coordinates_by_y[0][1]),
+            """
+            testing code to see two end points: (((calculate_x(coordinates_by_y[0][1] - 1), coordinates_by_y[0][1]),
                     (calculate_x(coordinates_by_y[1][1] + 1), coordinates_by_y[1][1])))
+            """
             return (((calculate_x(coordinates_by_y[0][1] - 1) + calculate_x(coordinates_by_y[1][1] + 1)) / 2,
                      (coordinates_by_y[0][1] + coordinates_by_y[1][1]) / 2), pow(radius_square[1], 0.5))
 
