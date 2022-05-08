@@ -5,17 +5,15 @@ import tkinter
 from tkinter import filedialog
 from tkinter import messagebox
 import shutil
-from configparser import ConfigParser
 import simulator
 
 """
-2/5/22 note: finished the coords calculation for setting checkpoints, but there are various issues remain unsolved
-             currently i know: the midpoint is not showing at the place the it should be (much better), might be the 
-             converting algorithm's problem or a calculation issue; the find radius algorithm will show error 
-             message is rise or run is zero; only set starting point have been checked for errors, but not others;
-             haven't done delete point function and show points function and the cursor effect. 
-             
-             the radius problem is now partially solved. 
+8/5/22 notes: now finish showing checkpoints and the cursor when using tools, and all tools are working, further 
+              usability features such as showing lines of checkpoints might be added. save function on Config class is
+              not yet written, means these data cannot be saved to a config file. On exit, if in the settings and 
+              checkpoints page, the program should ask if the users wants to save changes. The next step is to create
+              a settings page and make the home button more useful. Consider convert the coordinates of the points in 
+              the Config class
 """
 
 # Initialize pygame, must done at the beginning, before any other pygame function
@@ -28,6 +26,7 @@ button_font_medium = pygame.font.Font('fonts/comicbd.ttf', 35)  # comic sans MS,
 button_font_small = pygame.font.Font('fonts/comicbd.ttf', 25)  # comic sans MS, size 25, bold
 text_font_large = pygame.font.Font('fonts/times.ttf', 35)  # times new roman, size 35
 text_font_medium = pygame.font.Font('fonts/times.ttf', 25)  # times new roman, size 25
+text_font_small = pygame.font.Font('fonts/times.ttf', 15)  # times new roman, size 15
 
 
 class GUI:
@@ -50,27 +49,21 @@ class GUI:
         self.import_options = {'Img': 'self.import_file("img")', 'Txt': 'self.import_file("txt")'}
         # set current page to home page
         self.set_home_page()
+        # a class wide temporary variable to that allows the pass data, should be deleted, not in use now
         self.temp = None
-
     # end procedure
 
     def update(self, mouse_pos):
         # check if any buttons are clicked
         # cursor status can only be changed at set checkpoints page, so will not affect other pages
+        # if cursor is not 'Cursor', means a tool is in use and we should not check other buttons in this case
         if self.cursor != 'Cursor' and self.buttons[0].update(mouse_pos):
-            # delete all print statements after testing
-            pixel_colour = self.screen.get_at(mouse_pos)
-            print(pixel_colour)
-            print(self.cursor)
-            if pixel_colour[:3] == (255, 255, 255):
-                self.show_error('point_not_on_track')
-            else:
-                any_error = self.track_config.add_point(self.cursor, mouse_pos)
-                if any_error is not None:
-                    self.show_error(any_error)
-            print(self.track_config.get_item('CHECKPOINTS', 'START'))
-            print(self.track_config.get_item('CHECKPOINTS', 'FINISH'))
-            print(self.track_config.get_item('CHECKPOINTS', 'CHECKPOINTS'))
+            # try to add/delete a point given the cursor state and the mouse position, return None if no error
+            any_error = self.track_config.amend_point(self.cursor, mouse_pos)
+            # any return other than None will be deemed as an error
+            if any_error is not None:
+                self.show_error(any_error)
+            # end if
         else:
             for button in self.buttons:
                 if button.update(mouse_pos):
@@ -89,7 +82,6 @@ class GUI:
                     # end if
                 # end if
         # next button
-
     # end procedure
 
     def draw(self):
@@ -105,7 +97,7 @@ class GUI:
         # next drawing
         # blit all images
         for image in self.images:
-            image_obj = pygame.transform.scale(pygame.image.load(image[0]), image[1])
+            image_obj = pygame.transform.scale(pygame.image.load(image[0]), image[1])  # resize
             image_rect = image_obj.get_rect()
             image_rect.center = image[2]
             self.screen.blit(image_obj, image_rect)
@@ -114,19 +106,58 @@ class GUI:
         for text in self.texts:
             self.draw_text(text[0], text[1], text[2], self.screen, text[3])
         # next text
+        # if a track is loaded, then the program will draw all checkpoints in the Config file
         if self.track_config is not None:
-            coords = self.track_config.get_item('CHECKPOINTS', 'START')[0]
-            coords_2 = self.track_config.get_item('CHECKPOINTS', 'START')[1]
-            coords = (int(coords[0] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
-                          self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[0]),
-                      int(coords[1] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
-                          self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[1]))
-            coords_2 = (int(coords_2[0] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
-                            self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[0]),
-                        int(coords_2[1] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
-                            self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[1]))
-            pygame.draw.circle(self.screen, Colours['light_red'], coords, 5)
-            pygame.draw.circle(self.screen, Colours['light_red'], coords_2, 5)
+            # get all checkpoints data
+            start = self.track_config.get_item('CHECKPOINTS', 'START')
+            checkpoints = self.track_config.get_item('CHECKPOINTS', 'CHECKPOINTS')
+            finish = self.track_config.get_item('CHECKPOINTS', 'FINISH')
+            if start[1] != -1:  # if starting line is set
+                # convert the coordinates
+                centre = (int(start[0][0] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
+                              self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[0]),
+                          int(start[0][1] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
+                              self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[1]))
+                pygame.draw.circle(self.screen, Colours['light_green'], centre, 20)
+                self.draw_text('S', text_font_small, Colours['black'], self.screen, centre)
+            # end if
+            if finish[1] != -1:  # if finish line is set
+                # convert the coordinates
+                centre = (int(finish[0][0] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
+                              self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[0]),
+                          int(finish[0][1] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
+                              self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[1]))
+                pygame.draw.circle(self.screen, Colours['light_red'], centre, 20)
+                self.draw_text('F', text_font_small, Colours['black'], self.screen, centre)
+            # end if
+            if checkpoints:  # if any checkpoints have been set
+                # loop through all checkpoints
+                for i in range(len(checkpoints)):
+                    centre = (int(checkpoints[i][0][0] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
+                                  self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[0]),
+                              int(checkpoints[i][0][1] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
+                                  self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[1]))
+                    pygame.draw.circle(self.screen, Colours['light_blue'], centre, 20)
+                    self.draw_text('C' + str(i), text_font_small, Colours['black'], self.screen, centre)
+                # next i
+            # end if
+        # end if
+        # if a tool is in use, then draw the respective cursor
+        if self.cursor != 'Cursor':
+            mouse_pos = pygame.mouse.get_pos()
+            if self.cursor == 'Starting Line':  # green dot for starting line
+                pygame.draw.circle(self.screen, Colours['light_green'], mouse_pos, 5)
+            elif self.cursor == 'Checkpoints':  # blue dot for checkpoints
+                pygame.draw.circle(self.screen, Colours['light_blue'], mouse_pos, 5)
+            elif self.cursor == 'Finish Line':  # red dot for finish line
+                pygame.draw.circle(self.screen, Colours['light_red'], mouse_pos, 5)
+            else:  # blitz delete image for delete
+                image_obj = pygame.transform.scale(pygame.image.load(os.path.join('resources', 'delete.png')), (20, 20))
+                image_rect = image_obj.get_rect()
+                image_rect.center = mouse_pos
+                self.screen.blit(image_obj, image_rect)
+            # end if
+        # end if
     # end procedure
 
     def set_home_page(self):
@@ -140,7 +171,6 @@ class GUI:
         self.buttons.append(Button(self.screen, (1230, 220), Colours['black'], 'Start', 'tpStart'))
         self.buttons.append(Button(self.screen, (1230, 650), Colours['black'], 'Tracks', 'tpTracks'))
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
-
     # end procedure
 
     def set_start_page(self):
@@ -159,7 +189,6 @@ class GUI:
         self.buttons.append(Button(self.screen, (1230, 740), Colours['black'], 'Just Play', 'tp'))
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 200), (1050, 200), 3)")
-
     # end procedure
 
     def set_tracks_page(self):
@@ -176,7 +205,6 @@ class GUI:
             Button(self.screen, (700, 570), Colours['black'], 'Import', 'imImg', font=button_font_medium))
         self.texts.append(('Select a track to edit', text_font_large, Colours['black'], (700, 100)))
         self.texts.append(('Or import a new track', text_font_large, Colours['black'], (700, 500)))
-
     # end procedure
 
     def set_checkpoints_page(self, track_name):
@@ -200,7 +228,6 @@ class GUI:
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 70), (1400, 70), 3)")
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1200, 70), (1200, 900), 3)")
         self.texts.append(('Checkpoints', button_font_small, Colours['light_green'], (460, 35)))
-
     # end procedure
 
     def get_tracks(self, centre, width, to_settings=False):
@@ -266,7 +293,6 @@ class GUI:
                                            img_path='resources/mask.png', img_size=(width, width + 34)))
             # next i
         # end if
-
     # end procedure
 
     def import_file(self, filetype):
@@ -285,6 +311,7 @@ class GUI:
                         int(file[5])
                     except ValueError:
                         continue
+                    # end try
                     track_no.append(int(file[5]))
                 # end if
             # next file
@@ -302,47 +329,42 @@ class GUI:
                 # next i
             # end if
         # end if
-
     # end procedure
 
     def set_toolbar(self):
         tools = ['Starting Line', 'Checkpoints', 'Finish Line', 'Delete', 'Cursor']
+        # add all tools' button and text
+        # add dots for checkpoints, starting/finish line
+        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_green'], (1300, 170), 8)")
+        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_blue'], (1300, 328), 8)")
+        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_red'], (1300, 486), 8)")
+        # add image for cursor and delete
+        self.images.append((os.path.join('resources', 'delete.png'), (40, 40), (1300, 635)))
+        self.images.append((os.path.join('resources', 'cursor.png'), (40, 40), (1300, 793)))
         for i in range(len(tools)):
             # texts y value at 125, 283, 441, 599, 757
             self.texts.append((tools[i], button_font_small, Colours['black'], (1300, 125 + i * 158)))
             self.buttons.append(Button(self.screen, (1300, 150 + i * 158), None, '', 'tl' + tools[i],
                                        img_path='resources/mask.png', img_size=(170, 80)))
-        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_green'], (1300, 170), 8)")
-        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_blue'], (1300, 328), 8)")
-        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_red'], (1300, 486), 8)")
-        self.images.append((os.path.join('resources', 'delete.png'), (40, 40), (1300, 635)))
-        self.images.append((os.path.join('resources', 'cursor.png'), (40, 40), (1300, 793)))
+        # next i
+    # end procedure
 
     @staticmethod
     def show_error(error_type):
         tkinter.Tk().withdraw()  # hide the tk main window
         # messages contain what error message to show given the action
-        messages = {'no_file_selected': 'Please select a file',
-                    'track_overflow': 'More than 5 tracks, only the first 5 will be shown',
-                    'track_underflow': 'No tracks found, please import a track',
-                    'import_overflow': 'More than 5 tracks exist, please delete them before importing',
+        messages = {'no_file_selected': 'Please select a file.',
+                    'track_overflow': 'More than 5 tracks, only the first five will be shown.',
+                    'track_underflow': 'No tracks found, please import a track.',
+                    'import_overflow': 'More than 5 tracks exist, please delete them before importing.',
                     'point_not_on_track': 'The point you selected is not on the track. Try again.',
-                    'starting_line_already_set': 'Please remove the current starting line before setting a new one',
-                    'finish_line_already_set': 'Please remove the current finish line before setting a new one',
-                    'cursor_mismatch': 'Please finish setting the current point before use another cursor', }
+                    'starting_line_already_set': 'Please remove the current starting line before setting a new one.',
+                    'finish_line_already_set': 'Please remove the current finish line before setting a new one.',
+                    'cursor_mismatch': 'Please finish setting the current point before use another cursor.',
+                    'same_points_input': 'Cannot process two same points. Please try again.',
+                    'no_delete_point_selected': 'Please click a point shown on the map to delete it.'}
         tkinter.messagebox.showerror('Error', messages[error_type])
-
     # end procedure
-
-    @staticmethod
-    def pop_ups(command, action):
-        """All pop up windows, using tkinter, depreciated, waiting to be deleted"""
-        if command == 'swm':  # show warning message (ask yes or no)
-            tkinter.Tk().withdraw()  # hide the tk main window
-            # messages contain what warning message to show given the action
-            messages = {'no_settings_found': 'No settings found. Do you want delete the track?'}
-            return tkinter.messagebox.askyesno('Warning', messages[action])
-        # end if
 
     @staticmethod
     def draw_text(text, font, colour, surface, centre):
@@ -352,8 +374,6 @@ class GUI:
         text_box.center = centre
         surface.blit(text_obj, text_box)
     # end procedure
-
-
 # end class
 
 
@@ -377,7 +397,6 @@ class Button:
             self.rect = self.image.get_rect()  # text rect, name it rect for sprite group draw
             self.rect.center = centre
         # end if
-
     # end procedure
 
     def update(self, mouse_pos):
@@ -385,78 +404,15 @@ class Button:
             return True
         # end if
         return False
-
     # end function
 
     def draw(self):
         self.screen.blit(self.image, self.rect)
-
     # end procedure
 
     def clicked(self):
         return self.action
     # end function
-
-
-# end class
-
-
-class Config:
-    """use the config class in simulator file instead"""
-
-    def __init__(self, track_name):
-        self.config_obj = ConfigParser()
-        self.config_path = 'tracks/' + track_name[:6] + '.txt'
-        if self.check_validity(self.config_path):
-            self.config_obj.read(self.config_path)
-        else:
-            self.new_config()
-
-    # end procedure
-
-    def new_config(self):
-        self.config_obj['CHECKPOINTS'] = {
-            'START': ((-1, -1), (-1, -1)),  # (coordinate_1, coordinate_2)
-            'FINISH': ((-1, -1), -1),  # (coordinate, radius)
-            'CHECKPOINTS': [],  # [(coordinate, radius), (coordinate, radius), ...]
-        }
-        self.config_obj['TRACK'] = {
-            'START ANGLE': 0,  # automatically filled by the program, do not change
-            'MAX STEP': 0,  # automatically filled by the program, only change when the training cannot be done
-        }
-        self.config_obj['CAR'] = {
-            'SPEED RATIO': 0.0,  # assume the length of the starting line is 1, enter distance the car can cover in 1s
-            'CAR RATIO': 0.0,  # length of the car relative to the starting line, max 0.8
-            'TURNING ANGLE': 0,  # angle the car can turn in degree, max 60
-        }
-        self.config_obj['NN'] = {
-            'LEARNING RATE': 0.05,  # learning rate of the neural network
-            'MUTATION RATE': 0.05,  # mutation rate of the neural network
-            'MOMENTUM': 0.9,  # momentum of the neural network
-            'ACTIVATION': 'tanh',  # activation function of the neural network
-            'POPULATION': 20,  # number of neural networks in one generation, have to be even
-            'GENERATIONS': 1000,  # number of generations
-            'FITNESS THRESHOLD': 0.0,  # fitness threshold of the neural network, automatically filled by the program
-        }
-
-    # end procedure
-
-    @staticmethod
-    def check_validity(file_path):
-        if not os.path.isfile(file_path):
-            return False
-        else:
-            config_obj = ConfigParser()
-            config_obj.read(file_path)
-            sections = config_obj.sections()
-            if 'CHECKPOINTS' not in sections or 'TRACK' not in sections or 'CAR' not in sections or 'NN' not in sections:
-                return False
-            else:
-                return True
-            # end if`
-    # end function
-
-
 # end class
 
 
@@ -471,7 +427,6 @@ def run():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-
             # end if
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 Interface.update(event.pos)
@@ -482,13 +437,10 @@ def run():
         pygame.display.flip()  # flip the display to renew
         clock.tick(60)  # limit the frame rate to 60
     # end while
-
-
 # end procedure
 
 
 # Main
 if __name__ == '__main__':
     run()
-
 # end if
