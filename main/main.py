@@ -27,7 +27,6 @@ done = False  # Exit pygame flag set to false
 clock = pygame.time.Clock()  # Manage how fast the screen refreshes
 
 
-
 class Button(pygame.sprite.Sprite):
     def __init__(self, centre, width, height, colour, action):
         super().__init__()

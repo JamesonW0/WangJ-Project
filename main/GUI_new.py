@@ -48,6 +48,7 @@ class GUI:
                         'Tracks': 'self.set_tracks_page()', 'Settings_new': 'self.set_settings_page(True)'}
         self.import_options = {'Img': 'self.import_file("img")', 'Txt': 'self.import_file("txt")'}
         # set current page to home page
+        self.current_page = ''
         self.set_home_page()
         # a class wide temporary variable to that allows the pass data, should be deleted, not in use now
         self.temp = None
@@ -107,36 +108,38 @@ class GUI:
             self.draw_text(text[0], text[1], text[2], self.screen, text[3])
         # next text
         # if a track is loaded, then the program will draw all checkpoints in the Config file
-        if self.track_config is not None:
+        if self.current_page == 'Edit Checkpoints':
             # get all checkpoints data
             start = self.track_config.get_item('CHECKPOINTS', 'START')
             checkpoints = self.track_config.get_item('CHECKPOINTS', 'CHECKPOINTS')
             finish = self.track_config.get_item('CHECKPOINTS', 'FINISH')
+            ratio = self.track_config.get_item('DISPLAY', 'SETTINGS RATIO')
+            adjust_value = self.track_config.get_item('DISPLAY', 'ADJUSTED VALUE')
+            # this anonymous function converts the actual points on the track to point that can be drawn on the screen
+            convert_pos = lambda pos: (int(pos[0] * ratio + adjust_value[0]), int(pos[1] * ratio + adjust_value[1]))
             if start[1] != -1:  # if starting line is set
                 # convert the coordinates
-                centre = (int(start[0][0] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
-                              self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[0]),
-                          int(start[0][1] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
-                              self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[1]))
+                centre = convert_pos(start[0])
+                # usability feature
+                pygame.draw.line(self.screen, Colours['light_green'], convert_pos(start[2]), convert_pos(start[3]), 2)
                 pygame.draw.circle(self.screen, Colours['light_green'], centre, 20)
                 self.draw_text('S', text_font_small, Colours['black'], self.screen, centre)
             # end if
             if finish[1] != -1:  # if finish line is set
                 # convert the coordinates
-                centre = (int(finish[0][0] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
-                              self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[0]),
-                          int(finish[0][1] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
-                              self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[1]))
+                centre = convert_pos(finish[0])
+                # usability feature
+                pygame.draw.line(self.screen, Colours['light_red'], convert_pos(finish[2]), convert_pos(finish[3]), 2)
                 pygame.draw.circle(self.screen, Colours['light_red'], centre, 20)
                 self.draw_text('F', text_font_small, Colours['black'], self.screen, centre)
             # end if
             if checkpoints:  # if any checkpoints have been set
                 # loop through all checkpoints
                 for i in range(len(checkpoints)):
-                    centre = (int(checkpoints[i][0][0] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
-                                  self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[0]),
-                              int(checkpoints[i][0][1] * self.track_config.get_item('TRACK', 'SETTINGS RATIO') +
-                                  self.track_config.get_item('TRACK', 'ADJUSTED VALUE')[1]))
+                    centre = convert_pos(checkpoints[i][0])
+                    # usability feature
+                    pygame.draw.line(self.screen, Colours['light_blue'], convert_pos(checkpoints[i][2]),
+                                     convert_pos(checkpoints[i][3]), 2)
                     pygame.draw.circle(self.screen, Colours['light_blue'], centre, 20)
                     self.draw_text('C' + str(i), text_font_small, Colours['black'], self.screen, centre)
                 # next i
@@ -162,6 +165,7 @@ class GUI:
 
     def set_home_page(self):
         pygame.display.set_caption('Home')
+        self.current_page = 'Home'
         # clear all buttons/drawings/images/texts from the previous page
         self.buttons.clear()
         self.drawings.clear()
@@ -175,6 +179,7 @@ class GUI:
 
     def set_start_page(self):
         pygame.display.set_caption('Start')
+        self.current_page = 'Start'
         self.buttons.clear()
         self.drawings.clear()
         self.images.clear()
@@ -193,6 +198,7 @@ class GUI:
 
     def set_tracks_page(self):
         pygame.display.set_caption('Tracks')
+        self.current_page = 'Tracks'
         self.buttons.clear()
         self.drawings.clear()
         self.images.clear()
@@ -209,16 +215,20 @@ class GUI:
 
     def set_checkpoints_page(self, track_name):
         pygame.display.set_caption('Edit checkpoints')
+        self.current_page = 'Edit Checkpoints'
         self.buttons.clear()
         self.drawings.clear()
         self.images.clear()
         self.texts.clear()
-        # treat track as a button, this button must be the first button in the list buttons
-        self.track_config = simulator.Config(track_name)
-        size = self.track_config.get_item('TRACK', 'ORIGINAL SIZE')
-        ratio = self.track_config.get_item('TRACK', 'SETTINGS RATIO')
+        # initialise the track config, if not initialised already
+        if self.track_config is None:
+            self.track_config = simulator.Config(track_name)
+        # get ratio data
+        size = self.track_config.get_item('DISPLAY', 'ORIGINAL SIZE')
+        ratio = self.track_config.get_item('DISPLAY', 'SETTINGS RATIO')
         size = (int(size[0] * ratio), int(size[1] * ratio))
-        # the track is going to be a button, with centre (600, 485) and size optimized
+        # treat track as a button, this button must be the first button in the list buttons
+        # with centre (600, 485) and size optimized
         self.buttons.append(Button(self.screen, (600, 485), None, '', 'track',
                                    img_path=os.path.join('tracks', track_name), img_size=size))
         action = 'evself.set_settings_page("' + track_name + '")'
@@ -229,6 +239,23 @@ class GUI:
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1200, 70), (1200, 900), 3)")
         self.texts.append(('Checkpoints', button_font_small, Colours['light_green'], (460, 35)))
     # end procedure
+
+    def set_settings_page(self, track_name):
+        pygame.display.set_caption('Edit Settings')
+        self.current_page = 'Edit Settings'
+        self.buttons.clear()
+        self.drawings.clear()
+        self.images.clear()
+        self.texts.clear()
+        # initialise the track config, if not initialised already
+        if self.track_config is None:
+            self.track_config = simulator.Config(track_name)
+        action = 'evself.set_checkpoints_page("' + track_name + '")'
+        self.buttons.append(
+            Button(self.screen, (460, 35), Colours['black'], 'Checkpoints', action, font=button_font_small))
+        self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 70), (1400, 70), 3)")
+        self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1200, 70), (1200, 900), 3)")
+        self.texts.append(('Settings', button_font_small, Colours['light_green'], (930, 35)))
 
     def get_tracks(self, centre, width, to_settings=False):
         """Get all tracks from the tracks folder, display a error message if more than 5 tracks are found"""

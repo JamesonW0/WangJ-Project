@@ -30,17 +30,19 @@ class Config:
         settings_ratio = float(min(1200 / size[0], 820 / size[1]))
         simulator_ratio = float(min(1200 / size[0], 820 / size[1]))  # change 1200 and 820 to the appropriate size later
         self.config_obj['CHECKPOINTS'] = {
-            'START': ((-1, -1), -1),  # (midpoint, radius)
-            'FINISH': ((-1, -1), -1),  # (midpoint, radius)
-            'CHECKPOINTS': [],  # [(midpoint, radius), (midpoint, radius), ...]
+            'START': ((-1, -1), -1, (-1, -1), (-1, -1)),  # (midpoint, radius, edge_1, edge_2)
+            'FINISH': ((-1, -1), -1, (-1, -1), (-1, -1)),  # (midpoint, radius, edge_1, edge_2)
+            'CHECKPOINTS': [],  # [(midpoint, radius, edge_1, edge_2), (midpoint, radius, edge_1, edge_2), ...]
         }
-        self.config_obj['TRACK'] = {
-            'START ANGLE': 0,  # automatically filled by the program, do not change
-            'MAX STEP': 0,  # automatically filled by the program, only change when the training cannot be done
+        self.config_obj['DISPLAY'] = {
             'SETTINGS RATIO': settings_ratio,  # ratio of the track on the checkpoints page(settings)
             'SIMULATOR RATIO': simulator_ratio,  # ratio change of the track on any simulator page
             'ORIGINAL SIZE': size,  # (width, height)
             'ADJUSTED VALUE': (600 - size[0] * settings_ratio / 2, 485 - size[1] * settings_ratio / 2),
+        }
+        self.config_obj['TRACK'] = {
+            'START ANGLE': 0,  # automatically filled by the program, do not change
+            'MAX STEP': 0,  # automatically filled by the program, only change when the training cannot be done
         }
         self.config_obj['CAR'] = {
             'SPEED RATIO': 0.0,  # assume the length of the starting line is 1, enter distance the car can cover in 1s
@@ -61,18 +63,18 @@ class Config:
 
     def amend_point(self, cursor, mouse_pos):
         # convert click position to actual position on the track
-        adjusted_pos = ((mouse_pos[0] - self.get_item('TRACK', 'ADJUSTED VALUE')[0])
-                        / self.get_item('TRACK', 'SETTINGS RATIO'),
-                        (mouse_pos[1] - self.get_item('TRACK', 'ADJUSTED VALUE')[1])
-                        / self.get_item('TRACK', 'SETTINGS RATIO'))
+        adjusted_pos = ((mouse_pos[0] - self.get_item('DISPLAY', 'ADJUSTED VALUE')[0])
+                        / self.get_item('DISPLAY', 'SETTINGS RATIO'),
+                        (mouse_pos[1] - self.get_item('DISPLAY', 'ADJUSTED VALUE')[1])
+                        / self.get_item('DISPLAY', 'SETTINGS RATIO'))
         # detect if any errors occur, information is returned shows which error is it
         if self.img.getpixel((int(adjusted_pos[0]), int(adjusted_pos[1])))[:3] == (255, 255, 255):
             return 'point_not_on_track'
         elif self.last_cursor is not None and self.last_cursor != cursor:
             return 'cursor_mismatch'
-        elif cursor == 'Starting Line' and self.get_item('CHECKPOINTS', 'START') != ((-1, -1), -1):
+        elif cursor == 'Starting Line' and self.get_item('CHECKPOINTS', 'START')[1] != -1:
             return 'starting_line_already_set'
-        elif cursor == 'Finish Line' and self.get_item('CHECKPOINTS', 'FINISH') != ((-1, -1), -1):
+        elif cursor == 'Finish Line' and self.get_item('CHECKPOINTS', 'FINISH')[1] != -1:
             return 'finish_line_already_set'
         # end if
         self.last_cursor = cursor
@@ -221,27 +223,26 @@ class Config:
             # means one list will not be filled, then we can return the other one
             if not coordinates_by_x:
                 return (((calculate_x(coordinates_by_y[0][1] - 1) + calculate_x(coordinates_by_y[1][1] + 1)) / 2,
-                         (coordinates_by_y[0][1] + coordinates_by_y[1][1]) / 2), pow(radius_square[0], 0.5))
+                         (coordinates_by_y[0][1] + coordinates_by_y[1][1]) / 2), pow(radius_square[1], 0.5),
+                        (calculate_x(coordinates_by_y[0][1] - 1), coordinates_by_y[0][1] - 1),
+                        (calculate_x(coordinates_by_y[1][1] + 1), coordinates_by_y[1][1] + 1))
             else:
                 return (((coordinates_by_x[0][0] + coordinates_by_x[1][0]) / 2,
                          (calculate_y(coordinates_by_x[0][0] - 1) + calculate_y(coordinates_by_x[1][0] + 1)) / 2),
-                        pow(radius_square[0], 0.5))
+                        pow(radius_square[0], 0.5),
+                        (coordinates_by_x[0][0] - 1, calculate_y(coordinates_by_x[0][0] - 1)),
+                        (coordinates_by_x[1][0] + 1, calculate_y(coordinates_by_x[1][0] + 1)))
             # end if
         if radius_square[0] < radius_square[1]:
-            """
-            testing code to see two end points: (((coordinates_by_x[0][0] - 1, calculate_y(coordinates_by_x[0][0] - 1)),
-                     (coordinates_by_x[1][0] + 1, calculate_y(coordinates_by_x[1][0] + 1))))
-            """
             return (((coordinates_by_x[0][0] + coordinates_by_x[1][0]) / 2,
                      (calculate_y(coordinates_by_x[0][0] - 1) + calculate_y(coordinates_by_x[1][0] + 1)) / 2),
-                    pow(radius_square[0], 0.5))
+                    pow(radius_square[0], 0.5), (coordinates_by_x[0][0] - 1, calculate_y(coordinates_by_x[0][0] - 1)),
+                    (coordinates_by_x[1][0] + 1, calculate_y(coordinates_by_x[1][0] + 1)))
         else:
-            """
-            testing code to see two end points: (((calculate_x(coordinates_by_y[0][1] - 1), coordinates_by_y[0][1]),
-                    (calculate_x(coordinates_by_y[1][1] + 1), coordinates_by_y[1][1])))
-            """
             return (((calculate_x(coordinates_by_y[0][1] - 1) + calculate_x(coordinates_by_y[1][1] + 1)) / 2,
-                     (coordinates_by_y[0][1] + coordinates_by_y[1][1]) / 2), pow(radius_square[1], 0.5))
+                     (coordinates_by_y[0][1] + coordinates_by_y[1][1]) / 2), pow(radius_square[1], 0.5),
+                    (calculate_x(coordinates_by_y[0][1] - 1), coordinates_by_y[0][1] - 1),
+                    (calculate_x(coordinates_by_y[1][1] + 1), coordinates_by_y[1][1] + 1))
         # end if
     # end procedure
 
@@ -252,6 +253,12 @@ class Config:
     def set_item(self, section, key, value):
         self.config_obj[section][key] = str(value)
     # end procedure
+
+    def save(self):
+        pass
+
+    def exit(self):
+        pass
 
     @staticmethod
     def check_validity(file_path):
