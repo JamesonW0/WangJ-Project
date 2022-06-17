@@ -1,3 +1,4 @@
+import pygame
 import ast
 from configparser import ConfigParser
 from PIL import Image
@@ -22,6 +23,7 @@ class Config:
         # two classwide variable for amend_point
         self.coordinates = [(-1, -1), (-1, -1)]
         self.last_cursor = None
+
     # end procedure
 
     def new_config(self):
@@ -45,9 +47,10 @@ class Config:
             'MAX STEP': 0,  # automatically filled by the program, only change when the training cannot be done
         }
         self.config_obj['CAR'] = {
-            'SPEED RATIO': 0.0,  # assume the length of the starting line is 1, enter distance the car can cover in 1s
-            'CAR RATIO': 0.0,  # length of the car relative to the starting line, max 0.8
-            'TURNING ANGLE': 0,  # angle the car can turn in degree, max 60
+            'SPEED': 0.0,  # Number of pixels the car can travel within 1 second
+            'CAR LENGTH': 0.0,  # The length of the car in pixels
+            'CAR WIDTH': 0.0,  # The width of the car in pixels
+            'TURNING ANGLE': 0,  # angle the car can turn in degree, max 60 degree
         }
         self.config_obj['NN'] = {
             'LEARNING RATE': 0.05,  # learning rate of the neural network
@@ -134,6 +137,7 @@ class Config:
             # return an error if empty click
             return 'no_delete_point_selected'
         # end if
+
     # end function
 
     def get_point_data(self):
@@ -244,14 +248,18 @@ class Config:
                     (calculate_x(coordinates_by_y[0][1] - 1), coordinates_by_y[0][1] - 1),
                     (calculate_x(coordinates_by_y[1][1] + 1), coordinates_by_y[1][1] + 1))
         # end if
+
     # end procedure
 
     def get_item(self, section, key):
         return ast.literal_eval(self.config_obj[section][key])
+
     # end function
 
     def set_item(self, section, key, value):
-        self.config_obj[section][key] = str(value)
+        if isinstance(ast.literal_eval(value), type(self.get_item(section, key))):
+            self.config_obj[section][key] = str(value)
+
     # end procedure
 
     def save(self):
@@ -277,6 +285,18 @@ class Config:
         # end if
     # end function
 # end class
+
+
+class Car:
+    def __init__(self, show: bool, config):
+        img_path = ''
+        self.length = config.get_item('CAR', 'CAR LENGTH')
+        self.width = config.get_item('CAR', 'CAR WIDTH')
+        if show:  # load as a pygame object
+            pygame.image.load(img_path)
+        else:  # load as an image
+            pass
+
 
 
 if __name__ == '__main__':

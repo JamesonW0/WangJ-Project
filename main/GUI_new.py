@@ -8,12 +8,7 @@ import shutil
 import simulator
 
 """
-8/5/22 notes: now finish showing checkpoints and the cursor when using tools, and all tools are working, further 
-              usability features such as showing lines of checkpoints might be added. save function on Config class is
-              not yet written, means these data cannot be saved to a config file. On exit, if in the settings and 
-              checkpoints page, the program should ask if the users wants to save changes. The next step is to create
-              a settings page and make the home button more useful. Consider convert the coordinates of the points in 
-              the Config class
+20/5/22 notes: text box not finished yet. should be reviewed (or redo) after the simulator done. 
 """
 
 # Initialize pygame, must done at the beginning, before any other pygame function
@@ -41,6 +36,7 @@ class GUI:
         self.drawings = []  # list of drawings, append drawing strings (will be eval()'ed)
         self.images = []  # (image_path, size, centre)
         self.texts = []  # (text, font, colour,centre)
+        # cursor status can only be changed at set checkpoints page, so will not affect other pages
         self.cursor = 'Cursor'
         self.track_config = None  # dictionary of track data
         # tp command, value will be used in eval()
@@ -52,38 +48,41 @@ class GUI:
         self.set_home_page()
         # a class wide temporary variable to that allows the pass data, should be deleted, not in use now
         self.temp = None
+
     # end procedure
 
-    def update(self, mouse_pos):
-        # check if any buttons are clicked
-        # cursor status can only be changed at set checkpoints page, so will not affect other pages
-        # if cursor is not 'Cursor', means a tool is in use and we should not check other buttons in this case
-        if self.cursor != 'Cursor' and self.buttons[0].update(mouse_pos):
-            # try to add/delete a point given the cursor state and the mouse position, return None if no error
-            any_error = self.track_config.amend_point(self.cursor, mouse_pos)
-            # any return other than None will be deemed as an error
-            if any_error is not None:
-                self.show_error(any_error)
-            # end if
-        else:
-            for button in self.buttons:
-                if button.update(mouse_pos):
-                    action = button.clicked()  # if clicked, get action
-                    # evaluate action
-                    if action[:2] == 'tp':  # to page
-                        eval(self.to_page[action[2:]])
-                    elif action[:2] == 'im':  # import file
-                        eval(self.import_options[action[2:]])
-                    elif action[:2] == 'si':  # show image
-                        exec(action[2:])
-                    elif action[:2] == 'ev':  # show text
-                        eval(action[2:])
-                    elif action[:2] == 'tl':  # set cursor to a selected tool
-                        self.cursor = action[2:]
-                    # end if
+    def update(self, event):
+        # update procedure
+        if event.type == pygame.QUIT:  # check for quit
+            sys.exit()  # remember to register any functions that need to run at exit
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # check for buttons
+            mouse_pos = event.pos
+            # if cursor is not 'Cursor', means a tool is in use and we should not check other buttons in this case
+            if self.cursor != 'Cursor' and self.buttons[0].update(mouse_pos):  # check is the track is clicked
+                # try to add/delete a point given the cursor state and the mouse position, return None if no error
+                any_error = self.track_config.amend_point(self.cursor, mouse_pos)
+                if any_error is not None:  # any return other than None will be deemed as an error
+                    self.show_error(any_error)
                 # end if
-        # next button
-    # end procedure
+            else:
+                for button in self.buttons:
+                    if button.update(mouse_pos):
+                        action = button.clicked()  # if clicked, get action
+                        # evaluate action
+                        if action[:2] == 'tp':  # to page
+                            eval(self.to_page[action[2:]])
+                        elif action[:2] == 'im':  # import file
+                            eval(self.import_options[action[2:]])
+                        elif action[:2] == 'ex':  # execute the command
+                            exec(action[2:])
+                        elif action[:2] == 'ev':  # show text
+                            eval(action[2:])
+                        elif action[:2] == 'tl':  # set cursor to the tool selected
+                            self.cursor = action[2:]
+                        # end if
+                    # end if
+            # next button
+        # end procedure
 
     def draw(self):
         # always fill the background first
@@ -145,7 +144,7 @@ class GUI:
                 # next i
             # end if
         # end if
-        # if a tool is in use, then draw the respective cursor
+        # if a tool is in use, then draw the corresponding cursor
         if self.cursor != 'Cursor':
             mouse_pos = pygame.mouse.get_pos()
             if self.cursor == 'Starting Line':  # green dot for starting line
@@ -161,6 +160,7 @@ class GUI:
                 self.screen.blit(image_obj, image_rect)
             # end if
         # end if
+
     # end procedure
 
     def set_home_page(self):
@@ -175,6 +175,7 @@ class GUI:
         self.buttons.append(Button(self.screen, (1230, 220), Colours['black'], 'Start', 'tpStart'))
         self.buttons.append(Button(self.screen, (1230, 650), Colours['black'], 'Tracks', 'tpTracks'))
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
+
     # end procedure
 
     def set_start_page(self):
@@ -194,6 +195,7 @@ class GUI:
         self.buttons.append(Button(self.screen, (1230, 740), Colours['black'], 'Just Play', 'tp'))
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 200), (1050, 200), 3)")
+
     # end procedure
 
     def set_tracks_page(self):
@@ -211,6 +213,7 @@ class GUI:
             Button(self.screen, (700, 570), Colours['black'], 'Import', 'imImg', font=button_font_medium))
         self.texts.append(('Select a track to edit', text_font_large, Colours['black'], (700, 100)))
         self.texts.append(('Or import a new track', text_font_large, Colours['black'], (700, 500)))
+
     # end procedure
 
     def set_checkpoints_page(self, track_name):
@@ -243,6 +246,7 @@ class GUI:
     def set_settings_page(self, track_name):
         pygame.display.set_caption('Edit Settings')
         self.current_page = 'Edit Settings'
+        self.cursor = 'Cursor'
         self.buttons.clear()
         self.drawings.clear()
         self.images.clear()
@@ -256,6 +260,7 @@ class GUI:
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 70), (1400, 70), 3)")
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1200, 70), (1200, 900), 3)")
         self.texts.append(('Settings', button_font_small, Colours['light_green'], (930, 35)))
+    # end procedure
 
     def get_tracks(self, centre, width, to_settings=False):
         """Get all tracks from the tracks folder, display a error message if more than 5 tracks are found"""
@@ -309,7 +314,7 @@ class GUI:
                 size = track.get_size()
                 ratio = min(1050 / size[0], 700 / size[1])
                 size = str((int(size[0] * ratio), int(size[1] * ratio)))
-                action = 'siself.images[-1] = (' + '"tracks/' + tracks[i] + '", ' + size + ', (525, 550))'
+                action = 'exself.images[-1] = (' + '"tracks/' + tracks[i] + '", ' + size + ', (525, 550))'
                 self.buttons.append(Button(self.screen, (coords[i][0], coords[i][1] + 17), None, '', action,
                                            img_path='resources/mask.png', img_size=(width, width + 34)))
             # next i
@@ -443,6 +448,81 @@ class Button:
 # end class
 
 
+class SettingsBox:
+    def __init__(self, screen, config_obj):
+        self.name_font = button_font_medium
+        self.value_font = text_font_large
+        self.screen = screen
+        self.config = config_obj
+        # get data that can be changed on the settings page
+        self.data = {'TRACK: Maximum Step': self.config.get_item('TRACK', 'MAX STEP'),
+                     'CAR: Speed': self.config.get_item('CAR', 'SPEED'),
+                     'CAR: Car Length': self.config.get_item('CAR', 'CAR LENGTH'),
+                     'CAR: Car Width': self.config.get_item('CAR', 'CAR WIDTH'),
+                     'NN: Turning Angle': self.config.get_item('CAR', 'TURNING ANGLE'),
+                     'NN: Learning Rate': self.config.get_item('NN', 'LEARNING RATE'),
+                     'NN: Mutation Rate': self.config.get_item('NN', 'MUTATION RATE'),
+                     'NN: Momentum': self.config.get_item('NN', 'MOMENTUM'),
+                     'NN: Activation Function': self.config.get_item('NN', 'ACTIVATION FUNCTION'),
+                     'NN: Population': self.config.get_item('NN', 'POPULATION'),
+                     'NN: Generations': self.config.get_item('NN', 'GENERATION'),
+                     'NN: Fitness Threshold': self.config.get_item('NN', 'FITNESS THRESHOLD'),
+                     }
+        self.active = None  # contains the index of the setting box in active
+        self.settings_names = []  # (text_obj, text_rect)
+        self.entry_values = []  # (text_obj, text_rect)
+        self.entry_boxes = []  # rect
+        self.names = [self.data.keys()]  # global because used for update these settings in config
+        values = [self.data.values()]
+        for i in range(len(self.data)):
+            # initialise names for display
+            name_text = self.name_font.render(str(self.names[i]), True, Colours['black'])
+            name_rect = name_text.get_rect()
+            name_rect.topleft = (20 + (i // 6) * 440, 90 + (i % 6) * 135)
+            self.settings_names.append((name_text, name_rect))
+            # initialise input data for display
+            self.entry_values.append((str(values[i]), (150 + (i // 6) * 440, 90 + (i % 6) * 135)))
+            # initialise input boxes for display
+            self.entry_boxes.append(pygame.Rect(150 + (i // 6) * 440, 85 + (i % 6) * 135, 100, 35))
+        # next i
+
+    def update(self, event):  # given clicked, check if any input boxes are clicked
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            for i in range(len(self.entry_boxes)):
+                if self.entry_boxes[i].collidepoint(event.pos):
+                    if self.active is not None:
+                        pass
+                    self.active = i
+                    return
+                # end if
+            # next i
+            self.active = None
+        if event.type == pygame.KEYDOWN:
+            if self.active is not None:
+                if event.key == pygame.K_RETURN:
+                    self.active = None
+                elif event.key == pygame.K_BACKSPACE:
+                    self.entry_values[self.active][0] = self.entry_values[self.active][0][:-1]
+                else:
+                    self.entry_values[self.active][0] += event.unicode
+                # end if
+            # end if
+    # end procedure
+
+    def draw(self):
+        '''
+            def draw_text(text, font, colour, surface, centre):
+        text_obj = font.render(text, True, colour)
+        text_box = text_obj.get_rect()
+        text_box.center = centre
+        surface.blit(text_obj, text_box)
+        '''
+        for i in range(len(self.data)):
+            self.screen.blit(self.settings_names[i][0], self.settings_names[i][1])
+
+# end class
+
+
 # game function
 def run():
     """Runs the GUI"""
@@ -451,19 +531,15 @@ def run():
     while True:
         # User input and control
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            # end if
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                Interface.update(event.pos)
-            # end if
+            Interface.update(event)
         # next event
         # Drawing here
         Interface.draw()
         pygame.display.flip()  # flip the display to renew
         clock.tick(60)  # limit the frame rate to 60
     # end while
+
+
 # end procedure
 
 
