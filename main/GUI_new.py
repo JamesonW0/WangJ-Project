@@ -45,6 +45,7 @@ class GUI:
         self.import_options = {'Img': 'self.import_file("img")', 'Txt': 'self.import_file("txt")'}
         # set current page to home page
         self.current_page = ''
+        self.text_box = None
         self.set_home_page()
         # a class wide temporary variable to that allows the pass data, should be deleted, not in use now
         self.temp = None
@@ -82,6 +83,8 @@ class GUI:
                         # end if
                     # end if
             # next button
+        if self.text_box is not None:
+            self.text_box.update(event)
         # end procedure
 
     def draw(self):
@@ -160,7 +163,8 @@ class GUI:
                 self.screen.blit(image_obj, image_rect)
             # end if
         # end if
-
+        if self.text_box is not None:
+            self.text_box.draw()
     # end procedure
 
     def set_home_page(self):
@@ -258,7 +262,7 @@ class GUI:
         self.buttons.append(
             Button(self.screen, (460, 35), Colours['black'], 'Checkpoints', action, font=button_font_small))
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 70), (1400, 70), 3)")
-        self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1200, 70), (1200, 900), 3)")
+        self.text_box = SettingsBox(self.screen, self.track_config)
         self.texts.append(('Settings', button_font_small, Colours['light_green'], (930, 35)))
     # end procedure
 
@@ -450,8 +454,8 @@ class Button:
 
 class SettingsBox:
     def __init__(self, screen, config_obj):
-        self.name_font = button_font_medium
-        self.value_font = text_font_large
+        self.value_font = button_font_small
+        self.name_font = text_font_medium
         self.screen = screen
         self.config = config_obj
         # get data that can be changed on the settings page
@@ -459,31 +463,31 @@ class SettingsBox:
                      'CAR: Speed': self.config.get_item('CAR', 'SPEED'),
                      'CAR: Car Length': self.config.get_item('CAR', 'CAR LENGTH'),
                      'CAR: Car Width': self.config.get_item('CAR', 'CAR WIDTH'),
-                     'NN: Turning Angle': self.config.get_item('CAR', 'TURNING ANGLE'),
+                     'CAR: Turning Angle': self.config.get_item('CAR', 'TURNING ANGLE'),
                      'NN: Learning Rate': self.config.get_item('NN', 'LEARNING RATE'),
                      'NN: Mutation Rate': self.config.get_item('NN', 'MUTATION RATE'),
                      'NN: Momentum': self.config.get_item('NN', 'MOMENTUM'),
                      'NN: Activation Function': self.config.get_item('NN', 'ACTIVATION FUNCTION'),
                      'NN: Population': self.config.get_item('NN', 'POPULATION'),
-                     'NN: Generations': self.config.get_item('NN', 'GENERATION'),
+                     'NN: Generations': self.config.get_item('NN', 'GENERATIONS'),
                      'NN: Fitness Threshold': self.config.get_item('NN', 'FITNESS THRESHOLD'),
                      }
         self.active = None  # contains the index of the setting box in active
         self.settings_names = []  # (text_obj, text_rect)
         self.entry_values = []  # (text_obj, text_rect)
         self.entry_boxes = []  # rect
-        self.names = [self.data.keys()]  # global because used for update these settings in config
-        values = [self.data.values()]
+        self.names = list(self.data.keys())  # global because used for update these settings in config
+        values = list(self.data.values())
         for i in range(len(self.data)):
             # initialise names for display
             name_text = self.name_font.render(str(self.names[i]), True, Colours['black'])
             name_rect = name_text.get_rect()
-            name_rect.topleft = (20 + (i // 6) * 440, 90 + (i % 6) * 135)
+            name_rect.topleft = (200 + (i // 6) * 600, 90 + (i % 6) * 135)
             self.settings_names.append((name_text, name_rect))
             # initialise input data for display
-            self.entry_values.append((str(values[i]), (150 + (i // 6) * 440, 90 + (i % 6) * 135)))
+            self.entry_values.append([str(values[i]), (450 + (i // 6) * 600, 85 + (i % 6) * 135)])
             # initialise input boxes for display
-            self.entry_boxes.append(pygame.Rect(150 + (i // 6) * 440, 85 + (i % 6) * 135, 100, 35))
+            self.entry_boxes.append(pygame.Rect(450 + (i // 6) * 600, 85 + (i % 6) * 135, 100, 35))
         # next i
 
     def update(self, event):  # given clicked, check if any input boxes are clicked
@@ -511,7 +515,7 @@ class SettingsBox:
 
     def draw(self):
         '''
-            def draw_text(text, font, colour, surface, centre):
+        def draw_text(text, font, colour, surface, centre):
         text_obj = font.render(text, True, colour)
         text_box = text_obj.get_rect()
         text_box.center = centre
@@ -519,6 +523,10 @@ class SettingsBox:
         '''
         for i in range(len(self.data)):
             self.screen.blit(self.settings_names[i][0], self.settings_names[i][1])
+            entry_text = self.value_font.render(self.entry_values[i][0], True, Colours['black'])
+            entry_box = entry_text.get_rect()
+            entry_box.topleft = self.entry_values[i][1]
+            self.screen.blit(entry_text, entry_box)
 
 # end class
 

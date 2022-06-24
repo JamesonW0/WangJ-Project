@@ -56,7 +56,7 @@ class Config:
             'LEARNING RATE': 0.05,  # learning rate of the neural network
             'MUTATION RATE': 0.05,  # mutation rate of the neural network
             'MOMENTUM': 0.9,  # momentum of the neural network
-            'ACTIVATION': 'tanh',  # activation function of the neural network
+            'ACTIVATION FUNCTION': 'tanh',  # activation function of the neural network
             'POPULATION': 20,  # number of neural networks in one generation, have to be even
             'GENERATIONS': 1000,  # number of generations
             'FITNESS THRESHOLD': 0.0,  # fitness threshold of the neural network, automatically filled by the program
@@ -80,9 +80,9 @@ class Config:
         elif cursor == 'Finish Line' and self.get_item('CHECKPOINTS', 'FINISH')[1] != -1:
             return 'finish_line_already_set'
         # end if
-        self.last_cursor = cursor
         # set points given the cursor is not Delete
         if cursor != 'Delete':
+            self.last_cursor = cursor
             # loop through the self.coordinates to set points
             for index in range(2):
                 if self.coordinates[index] == (-1, -1):
@@ -116,18 +116,18 @@ class Config:
             # check if starting line is click
             start = self.get_item('CHECKPOINTS', 'START')
             if calculate_inside(adjusted_pos[0], start[0][0], adjusted_pos[1], start[0][1]):
-                self.set_item('CHECKPOINTS', 'START', ((-1, -1), -1))
+                self.set_item('CHECKPOINTS', 'START', ((-1, -1), -1, (-1, -1), (-1, -1)))
                 return
             # end if
             # check if finish line is click
             finish = self.get_item('CHECKPOINTS', 'FINISH')
             if calculate_inside(adjusted_pos[0], finish[0][0], adjusted_pos[1], finish[0][1]):
-                self.set_item('CHECKPOINTS', 'FINISH', ((-1, -1), -1))
+                self.set_item('CHECKPOINTS', 'FINISH', ((-1, -1), -1, (-1, -1), (-1, -1)))
                 return
             # end if
             # check if any checkpoints is click, in the reverse order of setting
             checkpoints = self.get_item('CHECKPOINTS', 'CHECKPOINTS')
-            for i in range(0, len(checkpoints), -1):
+            for i in range(0, len(checkpoints)):
                 if calculate_inside(adjusted_pos[0], checkpoints[i][0][0], adjusted_pos[1], checkpoints[i][0][1]):
                     del checkpoints[i]
                     self.set_item('CHECKPOINTS', 'CHECKPOINTS', checkpoints)
@@ -137,7 +137,6 @@ class Config:
             # return an error if empty click
             return 'no_delete_point_selected'
         # end if
-
     # end function
 
     def get_point_data(self):
@@ -227,7 +226,7 @@ class Config:
             # means one list will not be filled, then we can return the other one
             if not coordinates_by_x:
                 return (((calculate_x(coordinates_by_y[0][1] - 1) + calculate_x(coordinates_by_y[1][1] + 1)) / 2,
-                         (coordinates_by_y[0][1] + coordinates_by_y[1][1]) / 2), pow(radius_square[1], 0.5),
+                         (coordinates_by_y[0][1] + coordinates_by_y[1][1]) / 2), pow(radius_square[0], 0.5),
                         (calculate_x(coordinates_by_y[0][1] - 1), coordinates_by_y[0][1] - 1),
                         (calculate_x(coordinates_by_y[1][1] + 1), coordinates_by_y[1][1] + 1))
             else:
@@ -239,27 +238,31 @@ class Config:
             # end if
         if radius_square[0] < radius_square[1]:
             return (((coordinates_by_x[0][0] + coordinates_by_x[1][0]) / 2,
-                     (calculate_y(coordinates_by_x[0][0] - 1) + calculate_y(coordinates_by_x[1][0] + 1)) / 2),
-                    pow(radius_square[0], 0.5), (coordinates_by_x[0][0] - 1, calculate_y(coordinates_by_x[0][0] - 1)),
-                    (coordinates_by_x[1][0] + 1, calculate_y(coordinates_by_x[1][0] + 1)))
+                     (calculate_y(coordinates_by_x[0][0] - 5) + calculate_y(coordinates_by_x[1][0] + 5)) / 2),
+                    pow(radius_square[0], 0.5), (coordinates_by_x[0][0] - 5, calculate_y(coordinates_by_x[0][0] - 5)),
+                    (coordinates_by_x[1][0] + 5, calculate_y(coordinates_by_x[1][0] + 5)))
         else:
-            return (((calculate_x(coordinates_by_y[0][1] - 1) + calculate_x(coordinates_by_y[1][1] + 1)) / 2,
+            return (((calculate_x(coordinates_by_y[0][1] - 5) + calculate_x(coordinates_by_y[1][1] + 5)) / 2,
                      (coordinates_by_y[0][1] + coordinates_by_y[1][1]) / 2), pow(radius_square[1], 0.5),
-                    (calculate_x(coordinates_by_y[0][1] - 1), coordinates_by_y[0][1] - 1),
-                    (calculate_x(coordinates_by_y[1][1] + 1), coordinates_by_y[1][1] + 1))
+                    (calculate_x(coordinates_by_y[0][1] - 5), coordinates_by_y[0][1] - 5),
+                    (calculate_x(coordinates_by_y[1][1] + 5), coordinates_by_y[1][1] + 5))
         # end if
-
     # end procedure
 
     def get_item(self, section, key):
-        return ast.literal_eval(self.config_obj[section][key])
-
+        try:
+            return ast.literal_eval(self.config_obj[section][key])
+        except ValueError:
+            return self.config_obj[section][key]
     # end function
 
     def set_item(self, section, key, value):
-        if isinstance(ast.literal_eval(value), type(self.get_item(section, key))):
-            self.config_obj[section][key] = str(value)
-
+        try:
+            if isinstance(ast.literal_eval(value), type(self.get_item(section, key))):
+                self.config_obj[section][key] = str(value)
+        except ValueError:
+            if isinstance(value, type(self.get_item(section, key))):
+                self.config_obj[section][key] = str(value)
     # end procedure
 
     def save(self):
@@ -288,21 +291,20 @@ class Config:
 
 
 class Car:
-    def __init__(self, show: bool, config):
-        img_path = ''
+    def __init__(self, show: bool, config: Config):
+        img_path = '/resources/car.png'
         self.length = config.get_item('CAR', 'CAR LENGTH')
         self.width = config.get_item('CAR', 'CAR WIDTH')
+        self.angle = config.get_item('TRACK', 'START ANGLE')
+        self.mask = None
+        self.velocity = pygame.math.Vector2(config.get_item('CAR', 'SPEED'), 0)
+        self.velocity.rotate_ip(self.angle)
         if show:  # load as a pygame object
             pygame.image.load(img_path)
         else:  # load as an image
             pass
 
 
-
 if __name__ == '__main__':
-    a = Config('track1.png')
-    a.set_item('CHECKPOINTS', 'START', ((0, 0), 20))
-    print(a.get_item('CHECKPOINTS', 'START'))
-    img = Image.open('tracks/track1.png').convert('RGB')
-    print(img.getpixel((-1, -1)))
+    pass
 # end if
