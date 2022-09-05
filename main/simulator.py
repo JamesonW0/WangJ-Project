@@ -3,6 +3,8 @@ import ast
 from configparser import ConfigParser
 from PIL import Image
 import os
+import math
+import numpy as np
 
 
 class Config:
@@ -48,9 +50,9 @@ class Config:
         }
         self.config_obj['CAR'] = {
             'SPEED': 0.0,  # Number of pixels the car can travel within 1 second
-            'CAR LENGTH': 0.0,  # The length of the car in pixels
-            'CAR WIDTH': 0.0,  # The width of the car in pixels
-            'TURNING ANGLE': 0,  # angle the car can turn in degree, max 60 degree
+            'CAR LENGTH': 800.0,  # The length of the car in pixels
+            'CAR WIDTH': 400.0,  # The width of the car in pixels
+            'TURNING ANGLE': 5,  # angle the car can turn in degrees, max 10 degrees
         }
         self.config_obj['NN'] = {
             'LEARNING RATE': 0.05,  # learning rate of the neural network
@@ -137,6 +139,7 @@ class Config:
             # return an error if empty click
             return 'no_delete_point_selected'
         # end if
+
     # end function
 
     def get_point_data(self):
@@ -247,6 +250,7 @@ class Config:
                     (calculate_x(coordinates_by_y[0][1] - 5), coordinates_by_y[0][1] - 5),
                     (calculate_x(coordinates_by_y[1][1] + 5), coordinates_by_y[1][1] + 5))
         # end if
+
     # end procedure
 
     def get_item(self, section, key):
@@ -254,6 +258,7 @@ class Config:
             return ast.literal_eval(self.config_obj[section][key])
         except ValueError:
             return self.config_obj[section][key]
+
     # end function
 
     def set_item(self, section, key, value):
@@ -263,6 +268,7 @@ class Config:
         except ValueError:
             if isinstance(value, type(self.get_item(section, key))):
                 self.config_obj[section][key] = str(value)
+
     # end procedure
 
     def save(self):
@@ -287,24 +293,178 @@ class Config:
             # end if`
         # end if
     # end function
+
+
 # end class
 
 
-class Car:
-    def __init__(self, show: bool, config: Config):
-        img_path = '/resources/car.png'
-        self.length = config.get_item('CAR', 'CAR LENGTH')
-        self.width = config.get_item('CAR', 'CAR WIDTH')
-        self.angle = config.get_item('TRACK', 'START ANGLE')
-        self.mask = None
-        self.velocity = pygame.math.Vector2(config.get_item('CAR', 'SPEED'), 0)
-        self.velocity.rotate_ip(self.angle)
-        if show:  # load as a pygame object
-            pygame.image.load(img_path)
-        else:  # load as an image
-            pass
+class Car(pygame.sprite.Sprite):
+
+    def __init__(self, config, screen):
+        super().__init__()
+        self.config = config
+        self.screen = screen
+        self.original_car = pygame.image.load(os.path.join("resources", 'car.png'))
+        self.original_car = pygame.transform.scale(self.original_car, (config.get_item('CAR', 'CAR LENGTH'),
+                                                                       config.get_item('CAR', "CAR WIDTH")))
+        self.image = self.original_car
+        self.rect = self.image.get_rect(center=config.get_item('CHECKPOINTS', 'START')[0])
+        self.vel_vector = pygame.math.Vector2(1, 0)
+        self.angle = self.config.get_item('TRACK', 'START ANGLE')
+        self.turn_angle = self.config.get_item('CAR', "TURNING ANGLE")
+        self.direction = 0
+        self.alive = True
+        self.radars = []
+        self.radar_angles = [-60, -30, 0, 30, 60]
+        self.speed = self.config.get_item('CAR', 'SPEED') / 60
+        self.reward = 0
+
+    def drive(self):
+        self.rect.center += self.vel_vector * self.speed
+
+    def turn(self):
+        if self.direction == 1:
+            self.angle -= self.turn_angle
+            self.vel_vector.rotate_ip(self.turn_angle)
+        if self.direction == -1:
+            self.angle += self.turn_angle
+            self.vel_vector.rotate_ip(-self.turn_angle)
+
+        self.image = pygame.transform.rotozoom(self.original_car, self.angle, 0.1)
+        self.rect = self.image.get_rect(center=self.rect.center)
+
+    def collide(self):
+        mask = pygame.mask.from_surface(self.image).outline()
+        for coordinate in mask:
+            if self.screen.get_at(coordinate) == pygame.Color('white'):
+                self.alive = False
+                break
+
+    def observe(self):
+        self.radars.clear()
+        for radar_angle in self.radar_angles:
+            length = 0
+            x = int(self.rect.center[0])
+            y = int(self.rect.center[1])
+
+            while not self.screen.get_at((x, y)) == pygame.Color('white') and length < 200:
+                length += 1
+                x = int(self.rect.center[0] + math.cos(math.radians(self.angle + radar_angle)) * length)
+                y = int(self.rect.center[1] - math.sin(math.radians(self.angle + radar_angle)) * length)
+
+            # Draw Radar, can be deleted
+            pygame.draw.line(self.screen, (255, 254, 255, 255), self.rect.center, (x, y), 1)
+            pygame.draw.circle(self.screen, (0, 255, 0, 0), (x, y), 3)
+            # calculate distance
+            distance = int(math.sqrt(math.pow(self.rect.center[0] - x, 2) + math.pow(self.rect.center[1] - y, 2)))
+            self.radars.append(distance)
+
+    def update(self, direction):
+        self.direction = direction
+        self.drive()
+        self.turn()
+        self.collide()
+        self.observe()
+        return self.radars, self.reward, self.alive
+
+
+# mirror sampling
+def sign(kid_id):
+    if kid_id % 2 == 0:
+        return -1
+    else:
+        return 0
+
+
+# NN optimiser using momentum
+class SGD:
+    def __init__(self, params, learning_rate, momentum=0.9):
+        self.vector = np.zeros_like(params).astype(np.float32)
+        self.learning_rate = learning_rate
+        self.momentum = momentum
+
+    def new_gradient(self, gradients):
+        self.vector = self.momentum * self.vector + (1 - self.momentum) * gradients
+        return self.learning_rate * self.vector
+
+
+def build_net():
+    def linear(n_in, n_out):  # 网络线性层
+        w = np.random.randn(n_in * n_out).astype(np.float32) * .1  # 矩阵大小为输入乘以输出
+        b = np.random.randn(n_out).astype(np.float32) * .1  # 矩阵大小为输出
+        return (n_in, n_out), np.concatenate((w, b))
+
+    s0, p0 = linear(5, 30)
+    s1, p1 = linear(30, 20)
+    s2, p2 = linear(20, 1)
+    return [s0, s1, s2], np.concatenate((p0, p1, p2))
+
+
+def reshape_params(shapes, params):
+    temp_params = []
+    start = 0
+    for i, shape in enumerate(shapes):
+        n_w = shape[0] * shape[1]
+        n_b = shape[1]
+        temp_params += [params[start: start + n_w].reshape(shape),
+                        params[start + n_w: start + n_w + n_b].reshape((1, shape[1]))]
+        start += (n_w + n_b)
+        return temp_params
+
+
+def get_action(params, data):
+    data = data[np.newaxis, :]
+    data = np.tanh(data.dot(params[0]) + params[1])
+    data = np.tanh(data.dot(params[2]) + params[3])
+    data = data.dot(params[4]) + params[5]
+    return np.argmax(data, axis=1)[0]
+
+
+class Generation:
+    def __init__(self, num, config, screen):
+        self.cars = pygame.sprite.Group()
+        self.alive_status = []
+        self.ep_r = []
+        self.radars = []
+        for i in range(num):
+            self.cars.add(Car(config, screen))
+            self.alive_status.append(True)
+            self.ep_r.append(0)
+        # next i
+
+    def update(self, actions):
+        for i, car in enumerate(self.cars):
+            if actions[i] > 0.7:
+                s, r, alive = car.update(1)
+            elif actions[i] < -0.7:
+                s, r, alive = car.update(-1)
+            else:
+                s, r, alive = car.update(0)
+
+
+def run(screen, config):
+    """Run the GUI"""
+    clock = pygame.time.Clock()
+    car = pygame.sprite.Group()
+    car.add(Car(config, screen))
+    while True:
+        # User input and control
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:  # check for quit
+                pygame.quit()
+        # next event
+        screen.fill('black')
+        car.update()
+        # Drawing here
+        car.draw(screen)
+        pygame.display.flip()  # flip the display to renew
+        clock.tick(60)  # limit the frame rate to 60
 
 
 if __name__ == '__main__':
-    pass
+    screen = pygame.display.set_mode((1400, 900))
+    track_config = Config('track1.png')
+    track_config.set_item('CHECKPOINTS', 'START', ((500, 500), 10, (510, 510), (490, 490)))
+    track_config.set_item('CAR', 'SPEED', 300.0)
+    run(screen, track_config)
 # end if

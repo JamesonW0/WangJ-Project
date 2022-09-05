@@ -533,7 +533,7 @@ class SettingsBox:
 
 # game function
 def run():
-    """Runs the GUI"""
+    """Run the GUI"""
     Interface = GUI(1400, 900)
     clock = pygame.time.Clock()
     while True:
