@@ -365,6 +365,8 @@ class Car(pygame.sprite.Sprite):
         self.turn()
         self.collide()
         self.observe()
+
+    def feed(self):  # feed information for neural network
         return self.radars, self.reward, self.alive
 
 
@@ -389,9 +391,9 @@ class SGD:
 
 
 def build_net():
-    def linear(n_in, n_out):  # 网络线性层
-        w = np.random.randn(n_in * n_out).astype(np.float32) * .1  # 矩阵大小为输入乘以输出
-        b = np.random.randn(n_out).astype(np.float32) * .1  # 矩阵大小为输出
+    def linear(n_in, n_out):  # linear layer
+        w = np.random.randn(n_in * n_out).astype(np.float32) * .1  # size is the input * output
+        b = np.random.randn(n_out).astype(np.float32) * .1  # size is output
         return (n_in, n_out), np.concatenate((w, b))
 
     s0, p0 = linear(5, 30)
@@ -422,24 +424,47 @@ def get_action(params, data):
 
 class Generation:
     def __init__(self, num, config, screen):
-        self.cars = pygame.sprite.Group()
+        self.cars = []
         self.alive_status = []
         self.ep_r = []
         self.radars = []
         for i in range(num):
-            self.cars.add(Car(config, screen))
+            self.cars.append(Car(config, screen))
             self.alive_status.append(True)
             self.ep_r.append(0)
         # next i
 
     def update(self, actions):
-        for i, car in enumerate(self.cars):
+        for i, car in enumerate(self.cars):  # control direction
             if actions[i] > 0.7:
-                s, r, alive = car.update(1)
+                car.update(1)
+                obs, reward, alive = car.feed()
             elif actions[i] < -0.7:
-                s, r, alive = car.update(-1)
+                car.update(-1)
+                obs, reward, alive = car.feed()
             else:
-                s, r, alive = car.update(0)
+                car.update(0)
+                obs, reward, alive = car.feed()
+            # end if
+            counter = i
+            for status_no in range(counter):
+                if not self.alive_status[status_no]:
+                    counter += 1
+                # end if
+            # next status_no
+            self.ep_r[counter] += reward
+            self.radars.append(obs)
+            if not alive:
+                self.cars.pop(i)
+                counter = i
+                for status_no in range(len(self.alive_status)):
+                    if counter == 0:
+                        self.alive_status[status_no] = False
+                        break
+                    elif self.alive_status[status_no]:
+                        counter -= 1
+                    # end if 
+                # next status_no
 
 
 def run(screen, config):
@@ -454,7 +479,7 @@ def run(screen, config):
                 pygame.quit()
         # next event
         screen.fill('black')
-        car.update()
+        car.update(1)
         # Drawing here
         car.draw(screen)
         pygame.display.flip()  # flip the display to renew
