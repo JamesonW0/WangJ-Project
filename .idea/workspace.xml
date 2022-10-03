@@ -4,7 +4,6 @@
     <list default="true" id="4f819bd5-930f-490f-842d-b18a45f3ccb2" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main/simulator.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/simulator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/visualise from neat_python/visualize.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -176,5 +175,6 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
 </project>

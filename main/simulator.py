@@ -414,25 +414,48 @@ def reshape_params(shapes, params):
         return temp_params
 
 
-def get_action(params, data):
-    data = data[np.newaxis, :]
-    data = np.tanh(data.dot(params[0]) + params[1])
-    data = np.tanh(data.dot(params[2]) + params[3])
-    data = data.dot(params[4]) + params[5]
-    return np.argmax(data, axis=1)[0]
-
-
 class Generation:
-    def __init__(self, num, config, screen):
+    def __init__(self, kids, config, screen, mutation_rate,param=None, shapes=None):
         self.cars = []
         self.alive_status = []
         self.ep_r = []
         self.radars = []
-        for i in range(num):
+        self.params = []
+        kids = kids + kids % 2
+        for i in range(kids):
             self.cars.append(Car(config, screen))
             self.alive_status.append(True)
-            self.ep_r.append(0)
+            self.ep_r.append([kids, 0])
         # next i
+        # NN
+        # if not given, construct the template network parameter and record the shape of the network
+        if param is None:
+            self.net_shapes, self.params_template = build_net()
+        else:
+            self.net_shapes = shapes
+            self.params_template = param
+        # end if
+        # initialise the seed to perturb the network
+        self.noise_seeds = np.random.randint(0, 2 ** 32 - 1, size=kids, dtype=np.uint32).repeat(2)
+        # set up networks according to the seed
+        for index in range(self.noise_seeds.size):
+            np.random.seed(self.noise_seeds[index])
+            temp_param = self.params_template
+            temp_param += sign(index) * mutation_rate * np.random.randn(temp_param.size)
+            self.params.append(reshape_params(shapes, temp_param))
+
+    def get_actions(self):
+        actions = []
+        for index in range(len(self.radars)):
+            data = self.radars[index]
+            # run through NN to get an action
+            data = data[np.newaxis, :]
+            data = np.tanh(data.dot(self.params[index][0]) + self.params[index][1])
+            data = np.tanh(data.dot(self.params[index][2]) + self.params[index][3])
+            data = data.dot(self.params[index][4]) + self.params[index][5]
+            actions.append(np.argmax(data, axis=1)[0])
+        # clean up the used data
+        self.radars = []
 
     def update(self, actions):
         for i, car in enumerate(self.cars):  # control direction
@@ -452,11 +475,13 @@ class Generation:
                     counter += 1
                 # end if
             # next status_no
-            self.ep_r[counter] += reward
+            self.ep_r[counter][1] += reward
             self.radars.append(obs)
             if not alive:
                 self.cars.pop(i)
                 counter = i
+                # got to add something to do with the NN
+                # delete the network
                 for status_no in range(len(self.alive_status)):
                     if counter == 0:
                         self.alive_status[status_no] = False
