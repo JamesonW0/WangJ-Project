@@ -411,21 +411,24 @@ def reshape_params(shapes, params):
         temp_params += [params[start: start + n_w].reshape(shape),
                         params[start + n_w: start + n_w + n_b].reshape((1, shape[1]))]
         start += (n_w + n_b)
-        return temp_params
+    return temp_params
 
 
 class Generation:
-    def __init__(self, kids, config, screen, mutation_rate,param=None, shapes=None):
+    def __init__(self, kids, config, screen, mutation_rate, param=None, shapes=None):
         self.cars = []
         self.alive_status = []
         self.ep_r = []
         self.radars = []
         self.params = []
         kids = kids + kids % 2
+        # set up the cars
         for i in range(kids):
             self.cars.append(Car(config, screen))
             self.alive_status.append(True)
             self.ep_r.append([kids, 0])
+            self.cars[i].observe()
+            self.radars.append(self.cars[i].feed()[0])
         # next i
         # NN
         # if not given, construct the template network parameter and record the shape of the network
@@ -442,12 +445,12 @@ class Generation:
             np.random.seed(self.noise_seeds[index])
             temp_param = self.params_template
             temp_param += sign(index) * mutation_rate * np.random.randn(temp_param.size)
-            self.params.append(reshape_params(shapes, temp_param))
+            self.params.append(reshape_params(self.net_shapes, temp_param))
 
-    def get_actions(self):
+    def move(self):
         actions = []
         for index in range(len(self.radars)):
-            data = self.radars[index]
+            data = np.array(self.radars[index])
             # run through NN to get an action
             data = data[np.newaxis, :]
             data = np.tanh(data.dot(self.params[index][0]) + self.params[index][1])
@@ -456,6 +459,7 @@ class Generation:
             actions.append(np.argmax(data, axis=1)[0])
         # clean up the used data
         self.radars = []
+        self.update(actions)
 
     def update(self, actions):
         for i, car in enumerate(self.cars):  # control direction
@@ -479,6 +483,7 @@ class Generation:
             self.radars.append(obs)
             if not alive:
                 self.cars.pop(i)
+                self.params.pop(i)
                 counter = i
                 # got to add something to do with the NN
                 # delete the network
@@ -495,8 +500,7 @@ class Generation:
 def run(screen, config):
     """Run the GUI"""
     clock = pygame.time.Clock()
-    car = pygame.sprite.Group()
-    car.add(Car(config, screen))
+    Gen1 = Generation(10, config, screen, 0.05)
     while True:
         # User input and control
         for event in pygame.event.get():
@@ -504,9 +508,8 @@ def run(screen, config):
                 pygame.quit()
         # next event
         screen.fill('black')
-        car.update(1)
+        Gen1.move()
         # Drawing here
-        car.draw(screen)
         pygame.display.flip()  # flip the display to renew
         clock.tick(60)  # limit the frame rate to 60
 
