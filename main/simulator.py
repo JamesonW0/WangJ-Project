@@ -1,11 +1,16 @@
-import PIL.Image
+import gzip
+
 import pygame
 import ast
 from configparser import ConfigParser
 from PIL import Image
 import os
 import math
-import numpy as np
+import neat
+import sys
+import time
+
+current_generation = 0
 
 
 class Config:
@@ -13,9 +18,9 @@ class Config:
 
     def __init__(self, track_name):
         # initiate the track
-        self.config_path = 'tracks/' + track_name[:6] + '.txt'
-        self.track_name = track_name
-        self.img = Image.open(os.path.join('tracks', self.track_name))
+        self.config_path = 'tracks/' + track_name[:6] + 'config.txt'
+        self.track_path = './tracks/' + track_name + '.png'
+        self.img = Image.open(self.track_path)
         # initiate the corresponding config object for the track
         self.config_obj = ConfigParser()
         if self.check_validity(self.config_path):
@@ -23,7 +28,7 @@ class Config:
         else:
             self.new_config()
         # end if
-        # two classwide variable for amend_point
+        # two variables for amend_point
         self.coordinates = [(-1, -1), (-1, -1)]
         self.last_cursor = None
 
@@ -50,18 +55,21 @@ class Config:
             'MAX STEP': 0,  # automatically filled by the program, only change when the training cannot be done
         }
         self.config_obj['CAR'] = {
-            'SPEED': 0.0,  # Number of pixels the car can travel within 1 second
-            'CAR LENGTH': 500.0,  # The length of the car in pixels
-            'CAR WIDTH': 250.0,  # The width of the car in pixels
+            'SPEED': 10.0,  # Number of pixels the car can travel within 1 second, at the start
+            'MAX SPEED': 15.0,  # Maximum speed the car can travel
+            'MIN SPEED': 7.0,  # Maximum speed the car can travel
+            'SPEED STEP': 1.0,  # The value for the speed to change each time
+            'LENGTH': 60.0,  # The length of the car in pixels
+            'WIDTH': 60.0,  # The width of the car in pixels
             'TURNING ANGLE': 5,  # angle the car can turn in degrees, max 10 degrees
         }
         self.config_obj['NN'] = {
             'LEARNING RATE': 0.05,  # learning rate of the neural network
             'MUTATION RATE': 0.05,  # mutation rate of the neural network
             'MOMENTUM': 0.9,  # momentum of the neural network
-            'ACTIVATION FUNCTION': 'tanh',  # activation function of the neural network
             'POPULATION': 20,  # number of neural networks in one generation, have to be even
             'GENERATIONS': 1000,  # number of generations
+            'TIME': 20,  # Time allowed for each generation
             'FITNESS THRESHOLD': 0.0,  # fitness threshold of the neural network, automatically filled by the program
         }
 
@@ -265,7 +273,7 @@ class Config:
     def set_item(self, section, key, value):
         try:
             if isinstance(ast.literal_eval(value), type(self.get_item(section, key))):
-                self.config_obj[section][key] = str(value)
+                self.config_obj[section][key] = value
         except ValueError:
             if isinstance(value, type(self.get_item(section, key))):
                 self.config_obj[section][key] = str(value)
@@ -273,10 +281,9 @@ class Config:
     # end procedure
 
     def save(self):
-        pass
-
-    def exit(self):
-        pass
+        with open(self.config_path, 'w') as file:
+            self.config_obj.write(file)
+        # end with
 
     @staticmethod
     def check_validity(file_path):
@@ -294,256 +301,324 @@ class Config:
             # end if`
         # end if
     # end function
+# end class
+gzip.open()
+
+
+class Car:
+
+    def __init__(self, config, track):
+        # initialise car sprite object and its rotate object
+        # load car dimension (x, y) from config
+        self.car_dimension = (config.get_item('CAR', 'LENGTH'), config.get_item('CAR', 'WIDTH'))
+        self.car_sprite = pygame.image.load('resources/car.png')
+        self.car_sprite = pygame.transform.scale(self.car_sprite, self.car_dimension)
+        self.rotated_sprite = self.car_sprite
+
+        # load starting data from config
+        self.centre = list(config.get_item('CHECKPOINTS', 'START')[0])
+        self.pos = [self.centre[0] - self.car_dimension[0] / 2, self.centre[1] - self.car_dimension[1] / 2]
+        self.angle = config.get_item('TRACK', 'START ANGLE')
+
+        # load speed variables
+        self.max_speed = config.get_item('CAR', 'MAX SPEED')
+        self.min_speed = config.get_item('CAR', 'MIN SPEED')
+        self.initial_speed = config.get_item('CAR', 'SPEED')
+        self.speed = 0
+
+        self.speed_set = False  # flag for default speed to be set
+
+        self.radars = []  # list of radars
+        self.drawing_radars = []  # list of radars to be drawn
+
+        self.alive = True  # alive status for the car
+
+        self.corners = []  # position of the corners of the car to check alive
+        # referential data to locate the corner [[angles(rad)], length]
+        internal_angle = math.atan(self.car_dimension[0] / self.car_dimension[1])
+        self.corner_ref = [[internal_angle, math.pi - internal_angle, math.pi + internal_angle, -internal_angle],
+                           (math.sqrt(self.car_dimension[0] ** 2 + self.car_dimension[1] ** 2)) * 0.5 * 0.85]
+
+        self.distance = 0  # total distance driven
+        self.time = 0  # total time passed
+
+        self.track = track
+        # Get the track colour, for collision and radar
+        self.track_colour = self.track.get_at(tuple(self.centre))
+
+    # end procedure
+
+    def draw(self, screen):
+        screen.blit(self.rotated_sprite, self.pos)  # draw the car
+        self.draw_radar(screen)  # draw radars
+
+    # end procedure
+
+    def draw_radar(self, screen):
+        for radar in self.radars:
+            end_pos = radar[0]
+            pygame.draw.line(screen, (0, 255, 0), self.centre, end_pos, 1)
+            pygame.draw.circle(screen, (0, 255, 0), end_pos, 3)
+        # next radar
+
+    # end procedure
+
+    def check_collision(self):
+        self.alive = True
+        for point in self.corners:
+            # If any corner not on the track means a crash
+            try:
+                if self.track.get_at((int(point[0]), int(point[1]))) != self.track_colour:
+                    self.alive = False
+                    break
+                # end if
+            except IndexError:
+                self.alive = False
+                break
+            # end try
+        # next point
+    # end procedure
+
+    def observe(self, radar_angle):
+        # set initial radar values
+        length = 0
+        x = int(self.centre[0])
+        y = int(self.centre[1])
+
+        # loop to take observation
+        try:
+            while self.track.get_at((x, y)) == self.track_colour and length < 200:
+                length += 1
+                x = int(self.centre[0] + math.cos(math.radians(self.angle + radar_angle)) * length)
+                y = int(self.centre[1] - math.sin(math.radians(self.angle + radar_angle)) * length)
+        except IndexError:
+            pass
+
+        # calculate distance
+        dist = int(math.sqrt(math.pow(self.centre[0] - x, 2) + math.pow(self.centre[1] - y, 2)))
+        self.radars.append([(x, y), dist])
+
+    # end procedure
+
+    def update(self):
+
+        # Rotate the car sprite
+        self.rotated_sprite = self.rotate_centre(self.car_sprite, self.angle)
+        # Move it on x-direction
+        self.pos[0] += math.cos(math.radians(-self.angle)) * self.speed
+        # Move it on y-direction
+        self.pos[1] += math.sin(math.radians(-self.angle)) * self.speed
+        # If the car sprite gets too close to the edge (preset value a pixel)
+        # X: MAX(X_POS, a), MIN(X_POS, SCREEN_WIDTH - 100 - a)
+        # Y: MAX(Y_POS, a), MIN(Y_POS, SCREEN_WIDTH - 100 - a)
+
+        # Calculate New Center
+        self.centre = [int(self.pos[0]) + self.car_dimension[0] / 2, int(self.pos[1]) + self.car_dimension[1] / 2]
+
+        # Increment distance and time
+        self.distance += self.speed
+        self.time += 1
+
+        # Get corners of the car
+        self.corners.clear()
+        for internal_angle in self.corner_ref[0]:
+            # calculate the corners given the data
+            delta_x = math.cos(math.radians(self.angle) + internal_angle) * self.corner_ref[1]
+            delta_y = math.sin(math.radians(self.angle) + internal_angle) * self.corner_ref[1]
+            self.corners.append([self.centre[0] + delta_x, self.centre[1] + delta_y])
+        # next internal_angle
+
+        # Given the corners of the car, check if there is a collision
+        self.check_collision()
+
+        # Take radar readings
+        self.radars.clear()
+        for angle in range(-60, 61, 30):  # from -60 to 60 with step 30
+            self.observe(angle)
+        # next angle
+
+        # Set The Speed To 20 For The First Time
+        if not self.speed_set:
+            self.speed = self.initial_speed
+            self.speed_set = True
+        # end if
+
+    def get_data(self):
+        radars = self.radars
+        return_values = [0, 0, 0, 0, 0]
+        for i, radar in enumerate(radars):
+            return_values[i] = int(radar[1] / 30)
+        # next radar/i
+        return return_values
+
+    # end function
+
+    def get_alive(self):
+        return self.alive
+
+    # end function
+
+    def get_reward(self):
+        # should be changed
+        return self.distance / (self.car_dimension[0] / 2)
+
+    # end function
+
+    def change_speed(self, delta):
+        if self.min_speed <= self.speed + delta <= self.max_speed:
+            self.speed += delta
+        # end if
+    # end procedure
+
+    def change_direction(self, delta):
+        self.angle += delta
+    # end procedure
+
+    @staticmethod
+    def rotate_centre(img, angle):
+        # Rotate The Rectangle
+        rotated_img = pygame.transform.rotozoom(img, angle, 1)
+        return rotated_img
+    # end function
 
 
 # end class
 
 
-class Car(pygame.sprite.Sprite):
+class Population:
 
-    def __init__(self, config, screen):
-        super().__init__()
-        self.config = config
-        self.screen = screen
-        self.original_car = pygame.image.load(os.path.join("resources", 'car.png'))
-        self.original_car = pygame.transform.scale(self.original_car, (config.get_item('CAR', 'CAR LENGTH'),
-                                                                       config.get_item('CAR', "CAR WIDTH")))
-        self.image = self.original_car
-        self.rect = self.image.get_rect(center=config.get_item('CHECKPOINTS', 'START')[0])
-        self.vel_vector = pygame.math.Vector2(1, 0)
-        self.angle = self.config.get_item('TRACK', 'START ANGLE')
-        self.turn_angle = self.config.get_item('CAR', "TURNING ANGLE")
-        self.track = PIL.Image.open('tracks/track1.png')
-        self.track = self.track.load()
-        self.direction = 0
-        self.alive = True
-        self.radars = []
-        self.radar_angles = [-60, -30, 0, 30, 60]
-        self.speed = self.config.get_item('CAR', 'SPEED') / 60
-        self.reward = 0
-
-    def drive(self):
-        self.rect.center += self.vel_vector * self.speed
-
-    def turn(self):
-        if self.direction == 1:
-            self.angle -= self.turn_angle
-            self.vel_vector.rotate_ip(self.turn_angle)
-        if self.direction == -1:
-            self.angle += self.turn_angle
-            self.vel_vector.rotate_ip(-self.turn_angle)
-
-        self.image = pygame.transform.rotozoom(self.original_car, self.angle, 0.1)
-        self.rect = self.image.get_rect(center=self.rect.center)
-
-    def collide(self):
-        mask = pygame.mask.from_surface(self.image).outline()
-        for coordinate in mask:
-            if self.track[coordinate[0], coordinate[1]] == (255, 255, 255, 0):
-                self.alive = False
-                break
-
-    def observe(self):
-        self.radars.clear()
-        for radar_angle in self.radar_angles:
-            length = 0
-            x = int(self.rect.center[0])
-            y = int(self.rect.center[1])
-
-            try:
-                while self.screen.get_at((x, y)) != pygame.Color('white') and length < 200:
-                    length += 1
-                    x = int(self.rect.center[0] + math.cos(math.radians(self.angle + radar_angle)) * length)
-                    y = int(self.rect.center[1] - math.sin(math.radians(self.angle + radar_angle)) * length)
-            except IndexError:
-                pass
-
-            # Draw Radar, can be deleted
-            pygame.draw.line(self.screen, (255, 254, 255, 255), self.rect.center, (x, y), 1)
-            pygame.draw.circle(self.screen, (0, 255, 0, 0), (x, y), 3)
-            # calculate distance
-            distance = int(math.sqrt(math.pow(self.rect.center[0] - x, 2) + math.pow(self.rect.center[1] - y, 2)))
-            self.radars.append(distance)
-
-    def draw(self):
-        self.screen.blit(self.image, self.rect)
-
-    def update(self, direction):
-        self.direction = direction
-        self.drive()
-        self.turn()
-        # self.collide()
-        self.observe()
-
-    def feed(self):  # feed information for neural network
-        return self.radars, self.reward, self.alive
-
-
-# mirror sampling
-def sign(kid_id):
-    if kid_id % 2 == 0:
-        return -1
-    else:
-        return 0
-
-
-# NN optimiser using momentum
-class SGD:
-    def __init__(self, params, learning_rate, momentum=0.9):
-        self.vector = np.zeros_like(params).astype(np.float32)
-        self.learning_rate = learning_rate
-        self.momentum = momentum
-
-    def new_gradient(self, gradients):
-        self.vector = self.momentum * self.vector + (1 - self.momentum) * gradients
-        return self.learning_rate * self.vector
-
-
-def build_net():
-    def linear(n_in, n_out):  # linear layer
-        w = np.random.randn(n_in * n_out).astype(np.float32) * .1  # size is the input * output
-        b = np.random.randn(n_out).astype(np.float32) * .1  # size is output
-        return (n_in, n_out), np.concatenate((w, b))
-
-    s0, p0 = linear(5, 30)
-    s1, p1 = linear(30, 20)
-    s2, p2 = linear(20, 1)
-    return [s0, s1, s2], np.concatenate((p0, p1, p2))
-
-
-def reshape_params(shapes, params):
-    temp_params = []
-    start = 0
-    for i, shape in enumerate(shapes):
-        n_w = shape[0] * shape[1]
-        n_b = shape[1]
-        temp_params = temp_params + [params[start: start + n_w].reshape(shape),
-                                     params[start + n_w: start + n_w + n_b].reshape((1, shape[1]))]
-        start = start + n_w + n_b
-    return temp_params
-
-
-class Generation:
-    def __init__(self, kids, config, screen, mutation_rate, param=None, shapes=None):
+    def __init__(self, track_name, screen):
+        # empty list of cars and NN
         self.cars = []
-        self.alive_status = []
-        self.ep_r = []
-        self.radars = []
-        self.params = []
-        kids = kids + kids % 2
-        # set up the cars
-        for i in range(kids):
-            self.cars.append(Car(config, screen))
-            self.alive_status.append(True)
-            self.ep_r.append([kids, 0])
-            self.cars[i].observe()
-            self.radars.append(self.cars[i].feed()[0])
-        # next i
-        # NN
-        # if not given, construct the template network parameter and record the shape of the network
-        if param is None:
-            self.net_shapes, self.params_template = build_net()
-        else:
-            self.net_shapes = shapes
-            self.params_template = param
-        # end if
-        # initialise the seed to perturb the network
-        self.noise_seeds = np.random.randint(0, 2 ** 32 - 1, size=kids, dtype=np.uint32).repeat(2)
-        # set up networks according to the seed
-        for index in range(self.noise_seeds.size):
-            np.random.seed(self.noise_seeds[index])
-            temp_param = self.params_template
-            print(temp_param.size)
-            temp_param += sign(index) * mutation_rate * np.random.randn(temp_param.size)
-            self.params.append(reshape_params(self.net_shapes, temp_param))
+        self.nets = []
+        self.population = None
 
-        for i in self.params:
-            print(i)
-            print('------------------------------------')
-        exit()
+        # get track
+        self.track_path = './tracks/' + track_name + '.png'
+        self.track = pygame.image.load('tracks/track1.png')
+        self.track = pygame.transform.scale(self.track, (1400, 900))
 
-    def move(self):
-        actions = []
-        for index in range(len(self.radars)):
-            data = np.array(self.radars[index])
-            # run through NN to get an action
-            data = data[np.newaxis, :]
-            data = np.tanh(data.dot(self.params[index][0]) + self.params[index][1])
-            data = np.tanh(data.dot(self.params[index][2]) + self.params[index][3])
-            data = data.dot(self.params[index][4]) + self.params[index][5]
-            actions.append(np.argmax(data, axis=1)[0])
-        # clean up the used data
-        self.radars = []
-        self.update(actions)
+        # load config file path
+        self.nn_config_path = './NN/NN' + track_name[-1] + 'config.txt'
 
-    def update(self, actions):
-        for i, car in enumerate(self.cars):  # control direction
-            if actions[i] > 0.7:
-                car.update(1)
-                obs, reward, alive = car.feed()
-            elif actions[i] < -0.7:
-                car.update(-1)
-                obs, reward, alive = car.feed()
+        # load track and adjust the size
+        self.track = pygame.image.load(self.track_path)
+        self.track = pygame.transform.scale(self.track, (1400, 900))
+
+        # load config files
+        self.track_config = Config(track_name)
+        self.nn_config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
+                                            neat.DefaultStagnation, self.nn_config_path)
+
+        # load relevant variables from track config
+        self.speed_step = self.track_config.get_item('CAR', 'SPEED STEP')
+        self.turning_angle = self.track_config.get_item('CAR', "TURNING ANGLE")
+        self.max_time = self.track_config.get_item('NN', 'TIME')
+
+        # load screen
+        self.screen = screen
+
+        self.current_generation = 0  # store the number of generation
+    # end procedure
+
+    def eval_choice(self):
+        for i, car in enumerate(self.cars):
+            output = self.nets[i].activate(car.get_data())
+            choice = output.index(max(output))
+            if choice == 0:
+                car.change_direction(self.turning_angle)  # Left
+            elif choice == 1:
+                car.change_direction(-self.turning_angle)  # Right
+            elif choice == 2:
+                car.change_speed(self.speed_step)  # Accelerate
             else:
-                car.update(0)
-                obs, reward, alive = car.feed()
+                car.change_speed(-self.speed_step)  # Decelerate
             # end if
-            counter = i
-            for status_no in range(counter):
-                if not self.alive_status[status_no]:
-                    counter += 1
+        # next car/i
+    # end procedure
+
+    def generation(self, genomes, config):
+        # empty the car and net lists for the next generation
+        self.cars.clear()
+        self.nets.clear()
+
+        # create car instance and net for each genome
+        for i, genome in genomes:
+            net = neat.nn.FeedForwardNetwork.create(genome, config)
+            self.nets.append(net)
+            genome.fitness = 0
+            self.cars.append(Car(self.track_config, self.track))
+        # next genome/i
+
+        # update generation counter and set time counter
+        self.current_generation += 1
+        start_time = time.time()
+
+        # pygame
+        clock = pygame.time.Clock()
+        while True:
+            # Exit On Quit Event
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit(0)
                 # end if
-            # next status_no
-            self.ep_r[counter][1] += reward
-            self.radars.append(obs)
-            if not alive:
-                print('dead')
-                self.cars.pop(i)
-                self.params.pop(i)
-                counter = i
-                # got to add something to do with the NN
-                # delete the network
-                for status_no in range(len(self.alive_status)):
-                    if counter == 0:
-                        self.alive_status[status_no] = False
-                        break
-                    elif self.alive_status[status_no]:
-                        counter -= 1
-                    # end if 
-                # next status_no
+            # next event
 
-    def draw(self):
-        for i in range(len(self.cars)):
-            self.cars[i].draw()
+            self.eval_choice() # get action from NN and pass it to cars
 
+            # get alive and pass the reward to NN
+            still_alive = 0
+            for i, car in enumerate(self.cars):
+                if car.get_alive():
+                    still_alive += 1
+                    car.update()
+                    genomes[i][1].fitness += car.get_reward()
+                # end if
+            # next car/i
 
-def run(screen, config):
-    """Run the GUI"""
-    clock = pygame.time.Clock()
-    Gen1 = Generation(2, config, screen, 0.05)
-    track = pygame.image.load('tracks/track1.png')
-    track = pygame.transform.scale(track, (1400, 900))
-    while True:
-        # User input and control
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:  # check for quit
+            # end the generation if no alive or time exceeds
+            if still_alive == 0 or time.time() - start_time >= self.max_time:
                 pygame.quit()
-        # next event
-        screen.fill('white')
-        screen.blit(track, (0, 0))
-        Gen1.move()
-        Gen1.draw()
-        # Drawing here
-        pygame.display.flip()  # flip the display to renew
-        clock.tick(60)  # limit the frame rate to 60
+                break
+            # end if
+
+            self.screen.fill('white')
+            self.screen.blit(self.track, (0, 0))
+            for car in self.cars:
+                if car.get_alive():
+                    car.draw(self.screen)
+                # end if
+            # next car
+            pygame.display.flip()
+            clock.tick(60)  # 60 FPS
+        # end while
+    # end procedure
+
+    def run(self):
+        # Create Population And Add Reporters
+        self.population = neat.Population(self.nn_config)
+        self.population.add_reporter(neat.StdOutReporter(True))
+        stats = neat.StatisticsReporter()
+        self.population.add_reporter(stats)
+
+        # Run Simulation For A Maximum of 1000 Generations
+        try:
+            self.population.run(self.generation, 5)
+        except pygame.error:
+            pygame.init()
 
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
+    # Load Config
+    track_config = Config('track1')
+    track_config.set_item('CHECKPOINTS', 'START', ((250, 800), 20, (145, 795), (155, 805)))
+    track_config.set_item('CAR', 'LENGTH', 45.0)
+    track_config.set_item('CAR', 'WIDTH', 30.0)
+
+    pygame.init()
     screen = pygame.display.set_mode((1400, 900))
-    track_config = Config('track1.png')
-    track_config.set_item('CHECKPOINTS', 'START', ((150, 800), 10, (145, 795), (155, 805)))
-    track_config.set_item('CAR', 'SPEED', 300.0)
-    track_config.set_item('CAR', 'CAR LENGTH', 50)
-    track_config.set_item('CAR', 'CAR WIDTH', 50)
-    run(screen, track_config)
-# end if
+
+    g = Population('track1', screen)
+    g.run()
+

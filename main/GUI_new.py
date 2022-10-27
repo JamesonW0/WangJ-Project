@@ -167,14 +167,21 @@ class GUI:
             self.text_box.draw()
     # end procedure
 
-    def set_home_page(self):
-        pygame.display.set_caption('Home')
-        self.current_page = 'Home'
+    def reset(self):
         # clear all buttons/drawings/images/texts from the previous page
+        self.cursor = 'Cursor'
         self.buttons.clear()
         self.drawings.clear()
         self.images.clear()
         self.texts.clear()
+    # end procedure
+
+    def set_home_page(self):
+        self.reset()
+
+        pygame.display.set_caption('Home')
+        self.current_page = 'Home'
+
         # GIF demo needs to be added
         self.buttons.append(Button(self.screen, (1230, 220), Colours['black'], 'Start', 'tpStart'))
         self.buttons.append(Button(self.screen, (1230, 650), Colours['black'], 'Tracks', 'tpTracks'))
@@ -183,57 +190,59 @@ class GUI:
     # end procedure
 
     def set_start_page(self):
+        self.reset()
+
         pygame.display.set_caption('Start')
         self.current_page = 'Start'
-        self.buttons.clear()
-        self.drawings.clear()
-        self.images.clear()
-        self.texts.clear()
+
         # get and add tracks to images list to be drawn
         self.get_tracks((525, 100), 100)
         self.buttons.append(Button(self.screen, (22, 877), None, '', 'tpHome', img_path='resources/home.png',
                                    img_size=(40, 40)))
+
         # button command to be fill after the simulator is created
         self.buttons.append(Button(self.screen, (1230, 160), Colours['black'], 'New Training', 'tp'))
         self.buttons.append(Button(self.screen, (1230, 450), Colours['black'], 'Evaluate', 'tp'))
         self.buttons.append(Button(self.screen, (1230, 740), Colours['black'], 'Just Play', 'tp'))
+
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 200), (1050, 200), 3)")
-
     # end procedure
 
     def set_tracks_page(self):
+        self.reset()
+
         pygame.display.set_caption('Tracks')
         self.current_page = 'Tracks'
-        self.buttons.clear()
-        self.drawings.clear()
-        self.images.clear()
-        self.texts.clear()
+
         # get and add tracks to images list to be drawn
         self.get_tracks((700, 280), 120, to_settings=True)
         self.buttons.append(Button(self.screen, (22, 877), None, '', 'tpHome', img_path='resources/home.png',
                                    img_size=(40, 40)))
         self.buttons.append(
             Button(self.screen, (700, 570), Colours['black'], 'Import', 'imImg', font=button_font_medium))
+
         self.texts.append(('Select a track to edit', text_font_large, Colours['black'], (700, 100)))
         self.texts.append(('Or import a new track', text_font_large, Colours['black'], (700, 500)))
 
     # end procedure
 
     def set_checkpoints_page(self, track_name):
+        self.reset()
+
         pygame.display.set_caption('Edit checkpoints')
         self.current_page = 'Edit Checkpoints'
-        self.buttons.clear()
-        self.drawings.clear()
-        self.images.clear()
-        self.texts.clear()
+
         # initialise the track config, if not initialised already
         if self.track_config is None:
             self.track_config = simulator.Config(track_name)
+        # end if
+
         # get ratio data
         size = self.track_config.get_item('DISPLAY', 'ORIGINAL SIZE')
         ratio = self.track_config.get_item('DISPLAY', 'SETTINGS RATIO')
         size = (int(size[0] * ratio), int(size[1] * ratio))
+
         # treat track as a button, this button must be the first button in the list buttons
         # with centre (600, 485) and size optimized
         self.buttons.append(Button(self.screen, (600, 485), None, '', 'track',
@@ -241,20 +250,21 @@ class GUI:
         action = 'evself.set_settings_page("' + track_name + '")'
         self.buttons.append(
             Button(self.screen, (930, 35), Colours['black'], 'Settings', action, font=button_font_small))
-        self.set_toolbar()
+
+        self.set_toolbar()  # create toolbar for this page
+
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 70), (1400, 70), 3)")
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1200, 70), (1200, 900), 3)")
+
         self.texts.append(('Checkpoints', button_font_small, Colours['light_green'], (460, 35)))
     # end procedure
 
     def set_settings_page(self, track_name):
+        self.reset()
+
         pygame.display.set_caption('Edit Settings')
         self.current_page = 'Edit Settings'
-        self.cursor = 'Cursor'
-        self.buttons.clear()
-        self.drawings.clear()
-        self.images.clear()
-        self.texts.clear()
+
         # initialise the track config, if not initialised already
         if self.track_config is None:
             self.track_config = simulator.Config(track_name)
