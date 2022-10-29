@@ -14,12 +14,12 @@ start angle = 0
 max step = 0
 
 [CAR]
-speed = 10.0
-max speed = 15.0
-min speed = 7.0
-speed step = 1.0
+speed = 5.0
+max speed = 5.0
+min speed = 5.0
+speed step = 0.0
 length = 45.0
-width = 30.0
+width = 26.0
 turning angle = 5
 
 [NN]

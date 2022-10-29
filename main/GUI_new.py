@@ -41,7 +41,8 @@ class GUI:
         self.track_config = None  # dictionary of track data
         # tp command, value will be used in eval()
         self.to_page = {'Home': 'self.set_home_page()', 'Start': 'self.set_start_page()',
-                        'Tracks': 'self.set_tracks_page()', 'Settings_new': 'self.set_settings_page(True)'}
+                        'Tracks': 'self.set_tracks_page()', 'Settings_new': 'self.set_settings_page(True)',
+                        'New Training': 'self.set_training_page()'}
         self.import_options = {'Img': 'self.import_file("img")', 'Txt': 'self.import_file("txt")'}
         # set current page to home page
         self.current_page = ''
@@ -191,6 +192,8 @@ class GUI:
 
     def set_start_page(self):
         self.reset()
+        g = simulator.Train('track1', self.screen)
+        g.run()
 
         pygame.display.set_caption('Start')
         self.current_page = 'Start'
@@ -322,7 +325,7 @@ class GUI:
                                (coords[i][0], coords[i][1] + width / 2 + 20)))
         # next i
         if not to_settings:
-            self.images.append((os.path.join('resources', 'mask.png'), (1050, 700), (525, 550)))
+            self.images.append(('resources/mask.png', (1050, 700), (525, 550)))
             for i in range(len(coords)):
                 track = pygame.image.load(os.path.join('tracks', tracks[i]))
                 size = track.get_size()

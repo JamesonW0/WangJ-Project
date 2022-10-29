@@ -2,17 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4f819bd5-930f-490f-842d-b18a45f3ccb2" name="Changes" comment="update">
-      <change afterPath="$PROJECT_DIR$/main/Config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main/NN/NN1config.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main/NN/config_temp.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main/test.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main/tracks/track1config.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main/GUI_new.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/GUI_new.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/old_NN.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/old_NN.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main/resources/car.png" beforeDir="false" afterPath="$PROJECT_DIR$/main/resources/car.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main/simulator.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/simulator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main/tracks/track1.png" beforeDir="false" afterPath="$PROJECT_DIR$/main/tracks/track1.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/tracks/track1config.txt" beforeDir="false" afterPath="$PROJECT_DIR$/main/tracks/track1config.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -51,7 +47,28 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
-  <component name="RunManager" selected="Python.simulator">
+  <component name="RunManager" selected="Python.GUI_new">
+    <configuration name="GUI_new" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="WangJ-Project" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/main" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main/GUI_new.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="house" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PyGame" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -65,27 +82,6 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="D:/DESKTOP/PyGame/House of the Rising Sun/house.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="Project Reference" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="D:\Anaconda\envs\CS_Project\python.exe" />
-      <option name="WORKING_DIRECTORY" value="D:/DESKTOP/Project Reference/Car-master" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="D:/DESKTOP/Project Reference/Car-master/main.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -158,19 +154,19 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.main" />
       <item itemvalue="Python.simulator" />
       <item itemvalue="Python.old_NN" />
       <item itemvalue="Python.test" />
       <item itemvalue="Python.house" />
+      <item itemvalue="Python.GUI_new" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.GUI_new" />
         <item itemvalue="Python.simulator" />
-        <item itemvalue="Python.house" />
         <item itemvalue="Python.test" />
+        <item itemvalue="Python.house" />
         <item itemvalue="Python.old_NN" />
-        <item itemvalue="Python.main" />
       </list>
     </recent_temporary>
   </component>
@@ -190,7 +186,14 @@
       <option name="project" value="LOCAL" />
       <updated>1666708937737</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="update">
+      <created>1666900814051</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1666900814051</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

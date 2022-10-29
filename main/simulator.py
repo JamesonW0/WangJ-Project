@@ -1,5 +1,5 @@
 import gzip
-
+import random
 import pygame
 import ast
 from configparser import ConfigParser
@@ -9,8 +9,9 @@ import math
 import neat
 import sys
 import time
-
-current_generation = 0
+import pickle
+import neat.six_util
+import neat.math_util
 
 
 class Config:
@@ -57,11 +58,11 @@ class Config:
         self.config_obj['CAR'] = {
             'SPEED': 10.0,  # Number of pixels the car can travel within 1 second, at the start
             'MAX SPEED': 15.0,  # Maximum speed the car can travel
-            'MIN SPEED': 7.0,  # Maximum speed the car can travel
+            'MIN SPEED': 5.0,  # Maximum speed the car can travel
             'SPEED STEP': 1.0,  # The value for the speed to change each time
             'LENGTH': 60.0,  # The length of the car in pixels
             'WIDTH': 60.0,  # The width of the car in pixels
-            'TURNING ANGLE': 5,  # angle the car can turn in degrees, max 10 degrees
+            'TURNING ANGLE': 7,  # angle the car can turn in degrees, max 10 degrees
         }
         self.config_obj['NN'] = {
             'LEARNING RATE': 0.05,  # learning rate of the neural network
@@ -302,7 +303,6 @@ class Config:
         # end if
     # end function
 # end class
-gzip.open()
 
 
 class Car:
@@ -317,7 +317,8 @@ class Car:
 
         # load starting data from config
         self.centre = list(config.get_item('CHECKPOINTS', 'START')[0])
-        self.pos = [self.centre[0] - self.car_dimension[0] / 2, self.centre[1] - self.car_dimension[1] / 2]
+        self.car_rect = self.rotated_sprite.get_rect()
+        self.car_rect.center = self.centre
         self.angle = config.get_item('TRACK', 'START ANGLE')
 
         # load speed variables
@@ -335,9 +336,9 @@ class Car:
 
         self.corners = []  # position of the corners of the car to check alive
         # referential data to locate the corner [[angles(rad)], length]
-        internal_angle = math.atan(self.car_dimension[0] / self.car_dimension[1])
+        internal_angle = math.atan(self.car_dimension[1] / self.car_dimension[0])
         self.corner_ref = [[internal_angle, math.pi - internal_angle, math.pi + internal_angle, -internal_angle],
-                           (math.sqrt(self.car_dimension[0] ** 2 + self.car_dimension[1] ** 2)) * 0.5 * 0.85]
+                           (math.sqrt(self.car_dimension[0] ** 2 + self.car_dimension[1] ** 2)) * 0.5 * 0.92]
 
         self.distance = 0  # total distance driven
         self.time = 0  # total time passed
@@ -349,9 +350,8 @@ class Car:
     # end procedure
 
     def draw(self, screen):
-        screen.blit(self.rotated_sprite, self.pos)  # draw the car
+        screen.blit(self.rotated_sprite, self.car_rect)  # draw the car
         self.draw_radar(screen)  # draw radars
-
     # end procedure
 
     def draw_radar(self, screen):
@@ -405,15 +405,16 @@ class Car:
         # Rotate the car sprite
         self.rotated_sprite = self.rotate_centre(self.car_sprite, self.angle)
         # Move it on x-direction
-        self.pos[0] += math.cos(math.radians(-self.angle)) * self.speed
+        self.centre[0] += math.cos(math.radians(-self.angle)) * self.speed
         # Move it on y-direction
-        self.pos[1] += math.sin(math.radians(-self.angle)) * self.speed
+        self.centre[1] += math.sin(math.radians(-self.angle)) * self.speed
         # If the car sprite gets too close to the edge (preset value a pixel)
         # X: MAX(X_POS, a), MIN(X_POS, SCREEN_WIDTH - 100 - a)
         # Y: MAX(Y_POS, a), MIN(Y_POS, SCREEN_WIDTH - 100 - a)
 
-        # Calculate New Center
-        self.centre = [int(self.pos[0]) + self.car_dimension[0] / 2, int(self.pos[1]) + self.car_dimension[1] / 2]
+        # update car_rect
+        self.car_rect = self.rotated_sprite.get_rect()
+        self.car_rect.center = self.centre
 
         # Increment distance and time
         self.distance += self.speed
@@ -423,8 +424,8 @@ class Car:
         self.corners.clear()
         for internal_angle in self.corner_ref[0]:
             # calculate the corners given the data
-            delta_x = math.cos(math.radians(self.angle) + internal_angle) * self.corner_ref[1]
-            delta_y = math.sin(math.radians(self.angle) + internal_angle) * self.corner_ref[1]
+            delta_x = math.cos(-math.radians(self.angle) + internal_angle) * self.corner_ref[1]
+            delta_y = math.sin(-math.radians(self.angle) + internal_angle) * self.corner_ref[1]
             self.corners.append([self.centre[0] + delta_x, self.centre[1] + delta_y])
         # next internal_angle
 
@@ -485,7 +486,7 @@ class Car:
 # end class
 
 
-class Population:
+class Train:
 
     def __init__(self, track_name, screen):
         # empty list of cars and NN
@@ -496,14 +497,14 @@ class Population:
         # get track
         self.track_path = './tracks/' + track_name + '.png'
         self.track = pygame.image.load('tracks/track1.png')
-        self.track = pygame.transform.scale(self.track, (1400, 900))
+        self.track = pygame.transform.scale(self.track, (1200, 900))
 
         # load config file path
         self.nn_config_path = './NN/NN' + track_name[-1] + 'config.txt'
 
         # load track and adjust the size
         self.track = pygame.image.load(self.track_path)
-        self.track = pygame.transform.scale(self.track, (1400, 900))
+        self.track = pygame.transform.scale(self.track, (1200, 900))
 
         # load config files
         self.track_config = Config(track_name)
@@ -518,7 +519,7 @@ class Population:
         # load screen
         self.screen = screen
 
-        self.current_generation = 0  # store the number of generation
+        self.generation_no = 0  # store the number of generation
     # end procedure
 
     def eval_choice(self):
@@ -551,7 +552,7 @@ class Population:
         # next genome/i
 
         # update generation counter and set time counter
-        self.current_generation += 1
+        self.generation_no += 1
         start_time = time.time()
 
         # pygame
@@ -564,7 +565,7 @@ class Population:
                 # end if
             # next event
 
-            self.eval_choice() # get action from NN and pass it to cars
+            self.eval_choice()  # get action from NN and pass it to cars
 
             # get alive and pass the reward to NN
             still_alive = 0
@@ -578,7 +579,8 @@ class Population:
 
             # end the generation if no alive or time exceeds
             if still_alive == 0 or time.time() - start_time >= self.max_time:
-                pygame.quit()
+                #if self.generation_no % 10 == 0:
+                    #self.save_checkpoint(self.nn_config, self.population.population, self.population.species, self.generation_no)
                 break
             # end if
 
@@ -589,6 +591,10 @@ class Population:
                     car.draw(self.screen)
                 # end if
             # next car
+
+            # Drawing here
+            pygame.draw.line(self.screen, (143, 170, 220), (1203, 0), (1203, 900), 3)
+
             pygame.display.flip()
             clock.tick(60)  # 60 FPS
         # end while
@@ -600,25 +606,40 @@ class Population:
         self.population.add_reporter(neat.StdOutReporter(True))
         stats = neat.StatisticsReporter()
         self.population.add_reporter(stats)
+        #self.population.add_reporter(neat.Checkpointer(10))
 
         # Run Simulation For A Maximum of 1000 Generations
         try:
-            self.population.run(self.generation, 5)
+            self.population.run(self.generation, 1000)
         except pygame.error:
             pygame.init()
 
+    def save_checkpoint(self, config, population, species_set, generation):
+        """ Save the current simulation state. """
+        filename = '0' + str(self.generation_no)
+        print("Saving checkpoint to {0}".format(filename))
+
+        with gzip.open(filename, 'w', compresslevel=5) as f:
+            data = (generation, config, population, species_set, random.getstate())
+            pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+        # end with
+    # end procedure
 
 
 if __name__ == "__main__":
-    # Load Config
+    # Load track config
     track_config = Config('track1')
     track_config.set_item('CHECKPOINTS', 'START', ((250, 800), 20, (145, 795), (155, 805)))
     track_config.set_item('CAR', 'LENGTH', 45.0)
-    track_config.set_item('CAR', 'WIDTH', 30.0)
-
+    track_config.set_item('CAR', 'WIDTH', 26.0)
+    track_config.set_item('CAR', 'SPEED', 5.0)
+    track_config.set_item('CAR', 'MAX SPEED', 5.0)
+    track_config.set_item('CAR', 'MIN SPEED', 5.0)
+    track_config.set_item('CAR', 'SPEED STEP', 0.0)
+    track_config.save()
     pygame.init()
     screen = pygame.display.set_mode((1400, 900))
 
-    g = Population('track1', screen)
+    g = Train('track1', screen)
     g.run()
 
