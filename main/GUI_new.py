@@ -249,7 +249,7 @@ class GUI:
         # treat track as a button, this button must be the first button in the list buttons
         # with centre (600, 485) and size optimized
         self.buttons.append(Button(self.screen, (600, 485), None, '', 'track',
-                                   img_path=os.path.join('tracks', track_name), img_size=size))
+                                   img_path='tracks/' + track_name + '.png', img_size=size))
         action = 'evself.set_settings_page("' + track_name + '")'
         self.buttons.append(
             Button(self.screen, (930, 35), Colours['black'], 'Settings', action, font=button_font_small))
@@ -337,7 +337,7 @@ class GUI:
             # next i
         else:
             for i in range(len(coords)):
-                action = 'evself.set_checkpoints_page("' + tracks[i] + '")'
+                action = 'evself.set_checkpoints_page("' + tracks[i][:6] + '")'
                 self.buttons.append(Button(self.screen, (coords[i][0], coords[i][1] + 17), None, '', action,
                                            img_path='resources/mask.png', img_size=(width, width + 34)))
             # next i
