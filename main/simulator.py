@@ -38,18 +38,14 @@ class Config:
     def new_config(self):
         # size and ratio for showing onto the pygame screen and converting data
         size = self.img.size
-        settings_ratio = float(min(1200 / size[0], 820 / size[1]))
-        simulator_ratio = float(min(1200 / size[0], 820 / size[1]))  # change 1200 and 820 to the appropriate size later
         self.config_obj['CHECKPOINTS'] = {
             'START': ((-1, -1), -1, (-1, -1), (-1, -1)),  # (midpoint, radius, edge_1, edge_2)
             'FINISH': ((-1, -1), -1, (-1, -1), (-1, -1)),  # (midpoint, radius, edge_1, edge_2)
             'CHECKPOINTS': [],  # [(midpoint, radius, edge_1, edge_2), (midpoint, radius, edge_1, edge_2), ...]
         }
         self.config_obj['DISPLAY'] = {
-            'SETTINGS RATIO': settings_ratio,  # ratio of the track on the checkpoints page(settings)
-            'SIMULATOR RATIO': simulator_ratio,  # ratio change of the track on any simulator page
             'ORIGINAL SIZE': size,  # (width, height)
-            'ADJUSTED VALUE': (600 - size[0] * settings_ratio / 2, 485 - size[1] * settings_ratio / 2),
+            'SIMULATOR SIZE': (1200, 900),  # (width, height)
         }
         self.config_obj['TRACK'] = {
             'START ANGLE': 0,  # automatically filled by the program, do not change
@@ -77,13 +73,8 @@ class Config:
     # end procedure
 
     def amend_point(self, cursor, mouse_pos):
-        # convert click position to actual position on the track
-        adjusted_pos = ((mouse_pos[0] - self.get_item('DISPLAY', 'ADJUSTED VALUE')[0])
-                        / self.get_item('DISPLAY', 'SETTINGS RATIO'),
-                        (mouse_pos[1] - self.get_item('DISPLAY', 'ADJUSTED VALUE')[1])
-                        / self.get_item('DISPLAY', 'SETTINGS RATIO'))
         # detect if any errors occur, information is returned shows which error is it
-        if self.img.getpixel((int(adjusted_pos[0]), int(adjusted_pos[1])))[:3] == (255, 255, 255):
+        if self.img.getpixel((mouse_pos[0], mouse_pos[1]))[:3] == (255, 255, 255):
             return 'point_not_on_track'
         elif self.last_cursor is not None and self.last_cursor != cursor:
             return 'cursor_mismatch'
@@ -98,7 +89,7 @@ class Config:
             # loop through the self.coordinates to set points
             for index in range(2):
                 if self.coordinates[index] == (-1, -1):
-                    self.coordinates[index] = adjusted_pos
+                    self.coordinates[index] = mouse_pos
                     try:
                         data = self.get_point_data()
                     except ZeroDivisionError:  # if same point is clicked, information is returned and shown
@@ -127,20 +118,20 @@ class Config:
             # only 1 point can be deleted at a time
             # check if starting line is click
             start = self.get_item('CHECKPOINTS', 'START')
-            if calculate_inside(adjusted_pos[0], start[0][0], adjusted_pos[1], start[0][1]):
+            if calculate_inside(mouse_pos[0], start[0][0], mouse_pos[1], start[0][1]):
                 self.set_item('CHECKPOINTS', 'START', ((-1, -1), -1, (-1, -1), (-1, -1)))
                 return
             # end if
             # check if finish line is click
             finish = self.get_item('CHECKPOINTS', 'FINISH')
-            if calculate_inside(adjusted_pos[0], finish[0][0], adjusted_pos[1], finish[0][1]):
+            if calculate_inside(mouse_pos[0], finish[0][0], mouse_pos[1], finish[0][1]):
                 self.set_item('CHECKPOINTS', 'FINISH', ((-1, -1), -1, (-1, -1), (-1, -1)))
                 return
             # end if
             # check if any checkpoints is click, in the reverse order of setting
             checkpoints = self.get_item('CHECKPOINTS', 'CHECKPOINTS')
             for i in range(0, len(checkpoints)):
-                if calculate_inside(adjusted_pos[0], checkpoints[i][0][0], adjusted_pos[1], checkpoints[i][0][1]):
+                if calculate_inside(mouse_pos[0], checkpoints[i][0][0], mouse_pos[1], checkpoints[i][0][1]):
                     del checkpoints[i]
                     self.set_item('CHECKPOINTS', 'CHECKPOINTS', checkpoints)
                     return
@@ -149,7 +140,6 @@ class Config:
             # return an error if empty click
             return 'no_delete_point_selected'
         # end if
-
     # end function
 
     def get_point_data(self):
@@ -260,8 +250,7 @@ class Config:
                     (calculate_x(coordinates_by_y[0][1] - 5), coordinates_by_y[0][1] - 5),
                     (calculate_x(coordinates_by_y[1][1] + 5), coordinates_by_y[1][1] + 5))
         # end if
-
-    # end procedure
+    # end function
 
     def get_item(self, section, key):
         try:
@@ -637,9 +626,9 @@ if __name__ == "__main__":
     track_config.set_item('CAR', 'MIN SPEED', 7.0)
     track_config.set_item('CAR', 'SPEED STEP', 1.0)
     track_config.save()
+
     pygame.init()
     screen = pygame.display.set_mode((1400, 900))
 
     g = Train('track1', screen)
     g.run()
-

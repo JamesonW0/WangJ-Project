@@ -38,11 +38,12 @@ class GUI:
         self.texts = []  # (text, font, colour,centre)
         # cursor status can only be changed at set checkpoints page, so will not affect other pages
         self.cursor = 'Cursor'
+        self.track = ''
         self.track_config = None  # dictionary of track data
         # tp command, value will be used in eval()
         self.to_page = {'Home': 'self.set_home_page()', 'Start': 'self.set_start_page()',
                         'Tracks': 'self.set_tracks_page()', 'Settings_new': 'self.set_settings_page(True)',
-                        'New Training': 'self.set_training_page()'}
+                        'New Training': 'self.new_training()'}
         self.import_options = {'Img': 'self.import_file("img")', 'Txt': 'self.import_file("txt")'}
         # set current page to home page
         self.current_page = ''
@@ -116,33 +117,30 @@ class GUI:
             start = self.track_config.get_item('CHECKPOINTS', 'START')
             checkpoints = self.track_config.get_item('CHECKPOINTS', 'CHECKPOINTS')
             finish = self.track_config.get_item('CHECKPOINTS', 'FINISH')
-            ratio = self.track_config.get_item('DISPLAY', 'SETTINGS RATIO')
-            adjust_value = self.track_config.get_item('DISPLAY', 'ADJUSTED VALUE')
-            # this anonymous function converts the actual points on the track to point that can be drawn on the screen
-            convert_pos = lambda pos: (int(pos[0] * ratio + adjust_value[0]), int(pos[1] * ratio + adjust_value[1]))
+
             if start[1] != -1:  # if starting line is set
                 # convert the coordinates
-                centre = convert_pos(start[0])
+                centre = start[0]
                 # usability feature
-                pygame.draw.line(self.screen, Colours['light_green'], convert_pos(start[2]), convert_pos(start[3]), 2)
+                pygame.draw.line(self.screen, Colours['light_green'], start[2], start[3], 2)
                 pygame.draw.circle(self.screen, Colours['light_green'], centre, 20)
                 self.draw_text('S', text_font_small, Colours['black'], self.screen, centre)
             # end if
             if finish[1] != -1:  # if finish line is set
                 # convert the coordinates
-                centre = convert_pos(finish[0])
+                centre = finish[0]
                 # usability feature
-                pygame.draw.line(self.screen, Colours['light_red'], convert_pos(finish[2]), convert_pos(finish[3]), 2)
+                pygame.draw.line(self.screen, Colours['light_red'], finish[2], finish[3], 2)
                 pygame.draw.circle(self.screen, Colours['light_red'], centre, 20)
                 self.draw_text('F', text_font_small, Colours['black'], self.screen, centre)
             # end if
             if checkpoints:  # if any checkpoints have been set
                 # loop through all checkpoints
                 for i in range(len(checkpoints)):
-                    centre = convert_pos(checkpoints[i][0])
+                    centre = checkpoints[i][0]
                     # usability feature
-                    pygame.draw.line(self.screen, Colours['light_blue'], convert_pos(checkpoints[i][2]),
-                                     convert_pos(checkpoints[i][3]), 2)
+                    pygame.draw.line(self.screen, Colours['light_blue'], checkpoints[i][2],
+                                     checkpoints[i][3], 2)
                     pygame.draw.circle(self.screen, Colours['light_blue'], centre, 20)
                     self.draw_text('C' + str(i), text_font_small, Colours['black'], self.screen, centre)
                 # next i
@@ -192,8 +190,6 @@ class GUI:
 
     def set_start_page(self):
         self.reset()
-        g = simulator.Train('track1', self.screen)
-        g.run()
 
         pygame.display.set_caption('Start')
         self.current_page = 'Start'
@@ -204,12 +200,17 @@ class GUI:
                                    img_size=(40, 40)))
 
         # button command to be fill after the simulator is created
-        self.buttons.append(Button(self.screen, (1230, 160), Colours['black'], 'New Training', 'tp'))
+        self.buttons.append(Button(self.screen, (1230, 160), Colours['black'], 'New Training', 'tpNew Training'))
         self.buttons.append(Button(self.screen, (1230, 450), Colours['black'], 'Evaluate', 'tp'))
-        self.buttons.append(Button(self.screen, (1230, 740), Colours['black'], 'Just Play', 'tp'))
 
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 200), (1050, 200), 3)")
+    # end procedure
+
+    def new_training(self):
+        self.reset()
+        g = simulator.Train(self.track, self.screen)
+        g.run()
     # end procedure
 
     def set_tracks_page(self):
@@ -241,18 +242,13 @@ class GUI:
             self.track_config = simulator.Config(track_name)
         # end if
 
-        # get ratio data
-        size = self.track_config.get_item('DISPLAY', 'ORIGINAL SIZE')
-        ratio = self.track_config.get_item('DISPLAY', 'SETTINGS RATIO')
-        size = (int(size[0] * ratio), int(size[1] * ratio))
+        # get size data
+        size = self.track_config.get_item('DISPLAY', 'SIMULATOR SIZE')
 
         # treat track as a button, this button must be the first button in the list buttons
         # with centre (600, 485) and size optimized
         self.buttons.append(Button(self.screen, (600, 485), None, '', 'track',
                                    img_path='tracks/' + track_name + '.png', img_size=size))
-        action = 'evself.set_settings_page("' + track_name + '")'
-        self.buttons.append(
-            Button(self.screen, (930, 35), Colours['black'], 'Settings', action, font=button_font_small))
 
         self.set_toolbar()  # create toolbar for this page
 
@@ -260,23 +256,6 @@ class GUI:
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1200, 70), (1200, 900), 3)")
 
         self.texts.append(('Checkpoints', button_font_small, Colours['light_green'], (460, 35)))
-    # end procedure
-
-    def set_settings_page(self, track_name):
-        self.reset()
-
-        pygame.display.set_caption('Edit Settings')
-        self.current_page = 'Edit Settings'
-
-        # initialise the track config, if not initialised already
-        if self.track_config is None:
-            self.track_config = simulator.Config(track_name)
-        action = 'evself.set_checkpoints_page("' + track_name + '")'
-        self.buttons.append(
-            Button(self.screen, (460, 35), Colours['black'], 'Checkpoints', action, font=button_font_small))
-        self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 70), (1400, 70), 3)")
-        self.text_box = SettingsBox(self.screen, self.track_config)
-        self.texts.append(('Settings', button_font_small, Colours['light_green'], (930, 35)))
     # end procedure
 
     def get_tracks(self, centre, width, to_settings=False):
@@ -332,6 +311,9 @@ class GUI:
                 ratio = min(1050 / size[0], 700 / size[1])
                 size = str((int(size[0] * ratio), int(size[1] * ratio)))
                 action = 'exself.images[-1] = (' + '"tracks/' + tracks[i] + '", ' + size + ', (525, 550))'
+                self.buttons.append(Button(self.screen, (coords[i][0], coords[i][1] + 17), None, '', action,
+                                           img_path='resources/mask.png', img_size=(width, width + 34)))
+                action = 'exself.track = "' + tracks[i][:6] + '"'
                 self.buttons.append(Button(self.screen, (coords[i][0], coords[i][1] + 17), None, '', action,
                                            img_path='resources/mask.png', img_size=(width, width + 34)))
             # next i
@@ -462,85 +444,6 @@ class Button:
     def clicked(self):
         return self.action
     # end function
-# end class
-
-
-class SettingsBox:
-    def __init__(self, screen, config_obj):
-        self.value_font = button_font_small
-        self.name_font = text_font_medium
-        self.screen = screen
-        self.config = config_obj
-        # get data that can be changed on the settings page
-        self.data = {'TRACK: Maximum Step': self.config.get_item('TRACK', 'MAX STEP'),
-                     'CAR: Speed': self.config.get_item('CAR', 'SPEED'),
-                     'CAR: Car Length': self.config.get_item('CAR', 'CAR LENGTH'),
-                     'CAR: Car Width': self.config.get_item('CAR', 'CAR WIDTH'),
-                     'CAR: Turning Angle': self.config.get_item('CAR', 'TURNING ANGLE'),
-                     'NN: Learning Rate': self.config.get_item('NN', 'LEARNING RATE'),
-                     'NN: Mutation Rate': self.config.get_item('NN', 'MUTATION RATE'),
-                     'NN: Momentum': self.config.get_item('NN', 'MOMENTUM'),
-                     'NN: Activation Function': self.config.get_item('NN', 'ACTIVATION FUNCTION'),
-                     'NN: Population': self.config.get_item('NN', 'POPULATION'),
-                     'NN: Generations': self.config.get_item('NN', 'GENERATIONS'),
-                     'NN: Fitness Threshold': self.config.get_item('NN', 'FITNESS THRESHOLD'),
-                     }
-        self.active = None  # contains the index of the setting box in active
-        self.settings_names = []  # (text_obj, text_rect)
-        self.entry_values = []  # (text_obj, text_rect)
-        self.entry_boxes = []  # rect
-        self.names = list(self.data.keys())  # global because used for update these settings in config
-        values = list(self.data.values())
-        for i in range(len(self.data)):
-            # initialise names for display
-            name_text = self.name_font.render(str(self.names[i]), True, Colours['black'])
-            name_rect = name_text.get_rect()
-            name_rect.topleft = (200 + (i // 6) * 600, 90 + (i % 6) * 135)
-            self.settings_names.append((name_text, name_rect))
-            # initialise input data for display
-            self.entry_values.append([str(values[i]), (450 + (i // 6) * 600, 85 + (i % 6) * 135)])
-            # initialise input boxes for display
-            self.entry_boxes.append(pygame.Rect(450 + (i // 6) * 600, 85 + (i % 6) * 135, 100, 35))
-        # next i
-
-    def update(self, event):  # given clicked, check if any input boxes are clicked
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            for i in range(len(self.entry_boxes)):
-                if self.entry_boxes[i].collidepoint(event.pos):
-                    if self.active is not None:
-                        pass
-                    self.active = i
-                    return
-                # end if
-            # next i
-            self.active = None
-        if event.type == pygame.KEYDOWN:
-            if self.active is not None:
-                if event.key == pygame.K_RETURN:
-                    self.active = None
-                elif event.key == pygame.K_BACKSPACE:
-                    self.entry_values[self.active][0] = self.entry_values[self.active][0][:-1]
-                else:
-                    self.entry_values[self.active][0] += event.unicode
-                # end if
-            # end if
-    # end procedure
-
-    def draw(self):
-        '''
-        def draw_text(text, font, colour, surface, centre):
-        text_obj = font.render(text, True, colour)
-        text_box = text_obj.get_rect()
-        text_box.center = centre
-        surface.blit(text_obj, text_box)
-        '''
-        for i in range(len(self.data)):
-            self.screen.blit(self.settings_names[i][0], self.settings_names[i][1])
-            entry_text = self.value_font.render(self.entry_values[i][0], True, Colours['black'])
-            entry_box = entry_text.get_rect()
-            entry_box.topleft = self.entry_values[i][1]
-            self.screen.blit(entry_text, entry_box)
-
 # end class
 
 

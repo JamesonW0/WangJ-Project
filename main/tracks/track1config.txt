@@ -4,10 +4,8 @@ finish = ((-1, -1), -1, (-1, -1), (-1, -1))
 checkpoints = []
 
 [DISPLAY]
-settings ratio = 0.8571428571428571
-simulator ratio = 0.8571428571428571
-original size = (1400, 900)
-adjusted value = (0.0, 99.28571428571433)
+original size = (1200, 900)
+simulator size = (1200, 900)
 
 [TRACK]
 start angle = 0
@@ -20,7 +18,7 @@ min speed = 7.0
 speed step = 1.0
 length = 45.0
 width = 26.0
-turning angle = 5
+turning angle = 7
 
 [NN]
 learning rate = 0.05
