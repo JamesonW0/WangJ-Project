@@ -167,7 +167,7 @@ class GUI:
     # end procedure
 
     def reset(self):
-        # clear all buttons/drawings/images/texts from the previous page
+        # Reset cursor and clear all buttons/drawings/images/texts from the previous page
         self.cursor = 'Cursor'
         self.buttons.clear()
         self.drawings.clear()
@@ -240,22 +240,32 @@ class GUI:
         # initialise the track config, if not initialised already
         if self.track_config is None:
             self.track_config = simulator.Config(track_name)
+            self.track_config.save()
+        config_path = os.path.join('./tracks', track_name+'config.txt')
         # end if
 
         # get size data
         size = self.track_config.get_item('DISPLAY', 'SIMULATOR SIZE')
 
         # treat track as a button, this button must be the first button in the list buttons
-        # with centre (600, 485) and size optimized
-        self.buttons.append(Button(self.screen, (600, 485), None, '', 'track',
+        # with centre (600, 450) and size optimized
+        self.buttons.append(Button(self.screen, (600, 450), None, '', 'track',
                                    img_path='tracks/' + track_name + '.png', img_size=size))
+        # add settings button
+        self.buttons.append(Button(self.screen, (1300, 695), Colours['black'], 'Settings',
+                                   'exself.track_config.save()', font=button_font_medium))
+        self.buttons.append(Button(self.screen, (1300, 695), Colours['black'], 'Settings',
+                                   'evos.startfile(r"'+config_path+'")', font=button_font_medium))
+        # add exit button
+        self.buttons.append(Button(self.screen, (1300, 825), Colours['black'], 'EXIT',
+                                   'exself.track_config.save()', font=button_font_medium))
+        self.buttons.append(Button(self.screen, (1300, 825), Colours['black'], 'EXIT',
+                                   'tpHome', font=button_font_medium))
 
         self.set_toolbar()  # create toolbar for this page
 
-        self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 70), (1400, 70), 3)")
-        self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1200, 70), (1200, 900), 3)")
+        self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1200, 0), (1200, 900), 3)")
 
-        self.texts.append(('Checkpoints', button_font_small, Colours['light_green'], (460, 35)))
     # end procedure
 
     def get_tracks(self, centre, width, to_settings=False):
@@ -366,17 +376,17 @@ class GUI:
         tools = ['Starting Line', 'Checkpoints', 'Finish Line', 'Delete', 'Cursor']
         # add all tools' button and text
         # add dots for checkpoints, starting/finish line
-        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_green'], (1300, 170), 8)")
-        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_blue'], (1300, 328), 8)")
-        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_red'], (1300, 486), 8)")
+        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_green'], (1300, 75), 5)")
+        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_blue'], (1300, 205), 5)")
+        self.drawings.append("pygame.draw.circle(self.screen, Colours['light_red'], (1300, 335), 5)")
         # add image for cursor and delete
-        self.images.append((os.path.join('resources', 'delete.png'), (40, 40), (1300, 635)))
-        self.images.append((os.path.join('resources', 'cursor.png'), (40, 40), (1300, 793)))
+        self.images.append((os.path.join('resources', 'delete.png'), (38, 38), (1300, 465)))
+        self.images.append((os.path.join('resources', 'cursor.png'), (38, 38), (1300, 595)))
         for i in range(len(tools)):
             # texts y value at 125, 283, 441, 599, 757
-            self.texts.append((tools[i], button_font_small, Colours['black'], (1300, 125 + i * 158)))
-            self.buttons.append(Button(self.screen, (1300, 150 + i * 158), None, '', 'tl' + tools[i],
-                                       img_path='resources/mask.png', img_size=(170, 80)))
+            self.texts.append((tools[i], button_font_small, Colours['black'], (1300, 40 + i * 130)))
+            self.buttons.append(Button(self.screen, (1300, 60 + i * 130), None, '', 'tl' + tools[i],
+                                       img_path='resources/mask.png', img_size=(170, 65)))
         # next i
     # end procedure
 

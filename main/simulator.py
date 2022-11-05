@@ -19,13 +19,14 @@ class Config:
 
     def __init__(self, track_name):
         # initiate the track
-        self.config_path = 'tracks/' + track_name[:6] + 'config.txt'
+        self.track_config_path = 'tracks/' + track_name[:6] + 'config.txt'
+        self.nn_config_path = 'NN/NN' + track_name[:6] + 'config.txt'
         self.track_path = './tracks/' + track_name + '.png'
         self.img = Image.open(self.track_path)
         # initiate the corresponding config object for the track
-        self.config_obj = ConfigParser()
-        if self.check_validity(self.config_path):
-            self.config_obj.read(self.config_path)
+        self.track_config_obj = ConfigParser()
+        if self.check_validity(self.track_config_path):
+            self.track_config_obj.read(self.track_config_path)
         else:
             self.new_config()
         # end if
@@ -38,20 +39,19 @@ class Config:
     def new_config(self):
         # size and ratio for showing onto the pygame screen and converting data
         size = self.img.size
-        self.config_obj['CHECKPOINTS'] = {
+        self.track_config_obj['CHECKPOINTS'] = {
             'START': ((-1, -1), -1, (-1, -1), (-1, -1)),  # (midpoint, radius, edge_1, edge_2)
             'FINISH': ((-1, -1), -1, (-1, -1), (-1, -1)),  # (midpoint, radius, edge_1, edge_2)
             'CHECKPOINTS': [],  # [(midpoint, radius, edge_1, edge_2), (midpoint, radius, edge_1, edge_2), ...]
         }
-        self.config_obj['DISPLAY'] = {
+        self.track_config_obj['DISPLAY'] = {
             'ORIGINAL SIZE': size,  # (width, height)
             'SIMULATOR SIZE': (1200, 900),  # (width, height)
         }
-        self.config_obj['TRACK'] = {
+        self.track_config_obj['TRACK'] = {
             'START ANGLE': 0,  # automatically filled by the program, do not change
-            'MAX STEP': 0,  # automatically filled by the program, only change when the training cannot be done
         }
-        self.config_obj['CAR'] = {
+        self.track_config_obj['CAR'] = {
             'SPEED': 10.0,  # Number of pixels the car can travel within 1 second, at the start
             'MAX SPEED': 15.0,  # Maximum speed the car can travel
             'MIN SPEED': 5.0,  # Maximum speed the car can travel
@@ -60,10 +60,9 @@ class Config:
             'WIDTH': 60.0,  # The width of the car in pixels
             'TURNING ANGLE': 7,  # angle the car can turn in degrees, max 10 degrees
         }
-        self.config_obj['NN'] = {
-            'LEARNING RATE': 0.05,  # learning rate of the neural network
-            'MUTATION RATE': 0.05,  # mutation rate of the neural network
-            'MOMENTUM': 0.9,  # momentum of the neural network
+        self.track_config_obj['NN'] = {
+            'LEARNING RATE': 0.01,  # learning rate of the neural network
+            'MUTATION RATE': 0.01,  # mutation rate of the neural network
             'POPULATION': 20,  # number of neural networks in one generation, have to be even
             'GENERATIONS': 1000,  # number of generations
             'TIME': 20,  # Time allowed for each generation
@@ -164,29 +163,29 @@ class Config:
         radius_square = []  # by x square, then by y square
         # calculate the end points of the track with variable x, given run is not 0
         if run != 0:
-            colour = (0, 0, 0)
+            colour_a = None
             x = self.coordinates[0][0]
             # increase x to find the first coordinate
-            while colour != (255, 255, 255):
+            while colour_a != 0:
                 x += 1
                 y = calculate_y(x)
                 try:  # might be going out the map
-                    colour = self.img.getpixel((int(x), int(y)))[:3]
+                    colour_a = self.img.getpixel((int(x), int(y)))[-1]
                 except IndexError:
-                    colour = (255, 255, 255)
+                    colour_a = 0
                 # end try
             # end while
             coordinates_by_x.append((x, y))
             # decrease x to find the second coordinate
-            colour = (0, 0, 0)
+            colour_a = None
             x = self.coordinates[0][0]
-            while colour != (255, 255, 255):
+            while colour_a != 0:
                 x -= 1
                 y = calculate_y(x)
                 try:  # might be going out the map
-                    colour = self.img.getpixel((int(x), int(y)))[:3]
+                    colour_a = self.img.getpixel((int(x), int(y)))[-1]
                 except IndexError:
-                    colour = (255, 255, 255)
+                    colour_a = 0
                 # end try
             # end while
             coordinates_by_x.append((x, y))
@@ -195,29 +194,29 @@ class Config:
         # end if
         # calculate the end points of the track with variable y, given rise is not zero
         if rise != 0:
-            colour = (0, 0, 0)
+            colour_a = None
             y = self.coordinates[0][1]
             # increase y to find the first coordinate
-            while colour != (255, 255, 255):
+            while colour_a != 0:
                 y += 1
                 x = calculate_x(y)
                 try:  # might be going out the map
-                    colour = self.img.getpixel((int(x), int(y)))[:3]
+                    colour_a = self.img.getpixel((int(x), int(y)))[-1]
                 except IndexError:
-                    colour = (255, 255, 255)
+                    colour_a = 0
                 # end try
             # end while
             coordinates_by_y.append((x, y))
             # decrease x to find the second coordinate
-            colour = (0, 0, 0)
+            colour_a = None
             y = self.coordinates[0][1]
-            while colour != (255, 255, 255):
+            while colour_a != 0:
                 y -= 1
                 x = calculate_x(y)
                 try:  # might be going out the map
-                    colour = self.img.getpixel((int(x), int(y)))[:3]
+                    colour_a = self.img.getpixel((int(x), int(y)))[-1]
                 except IndexError:
-                    colour = (255, 255, 255)
+                    colour_a = 0
                 # end try
             # end while
             coordinates_by_y.append((x, y))
@@ -254,26 +253,39 @@ class Config:
 
     def get_item(self, section, key):
         try:
-            return ast.literal_eval(self.config_obj[section][key])
+            return ast.literal_eval(self.track_config_obj[section][key])
         except ValueError:
-            return self.config_obj[section][key]
+            return self.track_config_obj[section][key]
 
     # end function
 
     def set_item(self, section, key, value):
         try:
             if isinstance(ast.literal_eval(value), type(self.get_item(section, key))):
-                self.config_obj[section][key] = value
+                self.track_config_obj[section][key] = value
         except ValueError:
             if isinstance(value, type(self.get_item(section, key))):
-                self.config_obj[section][key] = str(value)
+                self.track_config_obj[section][key] = str(value)
 
     # end procedure
 
     def save(self):
-        with open(self.config_path, 'w') as file:
-            self.config_obj.write(file)
+        checkpoint_0 = self.get_item('CHECKPOINTS', 'CHECKPOINTS')[0][0]
+        start = self.get_item('CHECKPOINTS', 'START')[0]
+        start_angle = int(math.degrees(math.atan((checkpoint_0[1] - start[1])/(checkpoint_0[0] - start[0]))))
+        self.set_item('TRACK', 'START ANGLE', start_angle)
+
+        with open(self.track_config_path, 'w') as file:
+            self.track_config_obj.write(file)
         # end with
+        nn_config_obj = ConfigParser()
+        if os.path.isfile(self.nn_config_path):
+            nn_config_obj.read(self.nn_config_path)
+        else:
+            nn_config_obj.read('NN/config_temp.txt')
+
+        nn_config_obj.set('NEAT', 'pop_size', str(self.get_item('NN', 'POPULATION')))
+        nn_config_obj.set('DefaultGenome', 'activation_mutate_rate', str(self.get_item('NN', 'MUTATION RATE')))
 
     @staticmethod
     def check_validity(file_path):
@@ -305,7 +317,7 @@ class Car:
         self.rotated_sprite = self.car_sprite
 
         # load starting data from config
-        self.centre = list(config.get_item('CHECKPOINTS', 'START')[0])
+        self.centre = [int(config.get_item('CHECKPOINTS', 'START')[0][0]), int(config.get_item('CHECKPOINTS', 'START')[0][1])]
         self.car_rect = self.rotated_sprite.get_rect()
         self.car_rect.center = self.centre
         self.angle = config.get_item('TRACK', 'START ANGLE')
@@ -329,13 +341,22 @@ class Car:
         self.corner_ref = [[internal_angle, math.pi - internal_angle, math.pi + internal_angle, -internal_angle],
                            (math.sqrt(self.car_dimension[0] ** 2 + self.car_dimension[1] ** 2)) * 0.5 * 0.92]
 
+        # attributes for reward function
         self.distance = 0  # total distance driven
         self.time = 0  # total time passed
+        self.checkpoints = config.get_item('CHECKPOINTS', 'CHECKPOINTS')
+        self.checkpoints.append(config.get_item('CHECKPOINTS', 'FINISH'))
+        # cut other irrelevant items
+        for i in range(len(self.checkpoints)):
+            self.checkpoints[i] = self.checkpoints[i][:2]
+        # next i
+        self.old_dist_to_checkpoint = math.sqrt((self.centre[0] - self.checkpoints[0][0][0]) ** 2 +
+                                                (self.centre[1] - self.checkpoints[0][0][1]) ** 2)  # Pythagoras
+        self.new_dist_to_checkpoint = 0
 
         self.track = track
         # Get the track colour, for collision and radar
         self.track_colour = self.track.get_at(tuple(self.centre))
-
     # end procedure
 
     def draw(self, screen):
@@ -450,8 +471,19 @@ class Car:
 
     def get_reward(self):
         # should be changed
-        return self.distance / (self.car_dimension[0] / 2)
+        self.new_dist_to_checkpoint = math.sqrt((self.centre[0] - self.checkpoints[0][0][0]) ** 2 +
+                                                (self.centre[1] - self.checkpoints[0][0][1]) ** 2)  # Pythagoras
+        reward = self.old_dist_to_checkpoint - self.new_dist_to_checkpoint
+        reward += self.speed  # distance reward
+        self.old_dist_to_checkpoint = self.new_dist_to_checkpoint
 
+        if (self.centre[0] - self.checkpoints[0][0][0]) ** 2 + (self.centre[1] - self.checkpoints[0][0][1]) ** 2 <= \
+                (self.checkpoints[0][1]/2) ** 2:
+            del self.checkpoints[0]
+            if len(self.checkpoints) == 0:
+                self.alive = False
+                return 10000
+        return reward
     # end function
 
     def change_speed(self, delta):
@@ -603,6 +635,9 @@ class Train:
         except pygame.error:
             pygame.init()
 
+    def evaluate(self, nn_path):
+        pass
+
     def save_checkpoint(self, config, population, species_set, generation):
         """ Save the current simulation state. """
         filename = '0' + str(self.generation_no)
@@ -618,12 +653,11 @@ class Train:
 if __name__ == "__main__":
     # Load track config
     track_config = Config('track1')
-    track_config.set_item('CHECKPOINTS', 'START', ((250, 800), 20, (145, 795), (155, 805)))
     track_config.set_item('CAR', 'LENGTH', 45.0)
     track_config.set_item('CAR', 'WIDTH', 26.0)
-    track_config.set_item('CAR', 'SPEED', 10.0)
-    track_config.set_item('CAR', 'MAX SPEED', 15.0)
-    track_config.set_item('CAR', 'MIN SPEED', 7.0)
+    track_config.set_item('CAR', 'SPEED', 7.0)
+    track_config.set_item('CAR', 'MAX SPEED', 10.0)
+    track_config.set_item('CAR', 'MIN SPEED', 5.0)
     track_config.set_item('CAR', 'SPEED STEP', 1.0)
     track_config.save()
 
