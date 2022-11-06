@@ -12,6 +12,10 @@ import time
 import pickle
 import neat.six_util
 import neat.math_util
+from button import Button
+
+button_font_medium = pygame.font.Font('fonts/comicbd.ttf', 35)
+button_font_small = pygame.font.Font('fonts/comicbd.ttf', 25)  # comic sans MS, size 25, bold
 
 
 class Config:
@@ -270,10 +274,12 @@ class Config:
     # end procedure
 
     def save(self):
-        checkpoint_0 = self.get_item('CHECKPOINTS', 'CHECKPOINTS')[0][0]
-        start = self.get_item('CHECKPOINTS', 'START')[0]
-        start_angle = int(math.degrees(math.atan((checkpoint_0[1] - start[1])/(checkpoint_0[0] - start[0]))))
-        self.set_item('TRACK', 'START ANGLE', start_angle)
+        checkpoint_0 = self.get_item('CHECKPOINTS', 'CHECKPOINTS')
+        if len(checkpoint_0) != 0:
+            checkpoint_0 = checkpoint_0[0][0]
+            start = self.get_item('CHECKPOINTS', 'START')[0]
+            start_angle = int(math.degrees(math.atan((checkpoint_0[1] - start[1])/(checkpoint_0[0] - start[0]))))
+            self.set_item('TRACK', 'START ANGLE', start_angle)
 
         with open(self.track_config_path, 'w') as file:
             self.track_config_obj.write(file)
@@ -286,6 +292,9 @@ class Config:
 
         nn_config_obj.set('NEAT', 'pop_size', str(self.get_item('NN', 'POPULATION')))
         nn_config_obj.set('DefaultGenome', 'activation_mutate_rate', str(self.get_item('NN', 'MUTATION RATE')))
+        with open(self.nn_config_path, 'w') as file:
+            nn_config_obj.write(file)
+        # end with
 
     @staticmethod
     def check_validity(file_path):
@@ -540,7 +549,7 @@ class Train:
         # load screen
         self.screen = screen
 
-        self.generation_no = 0  # store the number of generation
+        self.generation_no = -1  # store the number of generation
     # end procedure
 
     def eval_choice(self):
@@ -578,11 +587,30 @@ class Train:
 
         # pygame
         clock = pygame.time.Clock()
+        buttons = [Button(self.screen, (1300, 200), (0, 0, 0), 'Save', 'save', button_font_medium),
+                   Button(self.screen, (1300, 450), (0, 0, 0), 'Exit', 'exit', button_font_medium),
+                   Button(self.screen, (1300, 700), (0, 0, 0), 'Save & Exit', 'save&exit', button_font_small)]
         while True:
             # Exit On Quit Event
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit(0)
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # check for buttons
+                    for button in buttons:
+                        if button.update(event.pos):
+                            action = button.clicked()
+                            if action == 'save':
+                                self.save_checkpoint(self.nn_config, self.population.population,
+                                                     self.population.species, self.generation_no)
+                            elif action == 'exit':
+                                raise pygame.error
+                            elif action == 'save&exit':
+                                self.save_checkpoint(self.nn_config, self.population.population,
+                                                     self.population.species, self.generation_no)
+                                raise pygame.error
+                            # end if
+                        # end if
+                    # next button
                 # end if
             # next event
 
@@ -600,8 +628,6 @@ class Train:
 
             # end the generation if no alive or time exceeds
             if still_alive == 0 or time.time() - start_time >= self.max_time:
-                #if self.generation_no % 10 == 0:
-                    #self.save_checkpoint(self.nn_config, self.population.population, self.population.species, self.generation_no)
                 break
             # end if
 
@@ -615,6 +641,9 @@ class Train:
 
             # Drawing here
             pygame.draw.line(self.screen, (143, 170, 220), (1203, 0), (1203, 900), 3)
+            for button in buttons:
+                button.draw()
+            # next button
 
             pygame.display.flip()
             clock.tick(60)  # 60 FPS
@@ -636,11 +665,18 @@ class Train:
             pygame.init()
 
     def evaluate(self, nn_path):
-        pass
+        self.population = neat.Checkpointer.restore_checkpoint(nn_path)
+        self.population.add_reporter(neat.StdOutReporter(True))
+        stats = neat.StatisticsReporter()
+        self.population.add_reporter(stats)
+        try:
+            self.population.run(self.generation, 1)
+        except pygame.error:
+            pygame.init()
 
     def save_checkpoint(self, config, population, species_set, generation):
         """ Save the current simulation state. """
-        filename = '0' + str(self.generation_no)
+        filename = 'NN-checkpoint-T' + self.track_path[-5] + '-G' + str(self.generation_no) + '-' + str(time.time())
         print("Saving checkpoint to {0}".format(filename))
 
         with gzip.open(filename, 'w', compresslevel=5) as f:

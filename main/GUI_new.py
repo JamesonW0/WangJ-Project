@@ -6,6 +6,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 import shutil
 import simulator
+from button import Button
 
 """
 20/5/22 notes: text box not finished yet. should be reviewed (or redo) after the simulator done. 
@@ -38,19 +39,17 @@ class GUI:
         self.texts = []  # (text, font, colour,centre)
         # cursor status can only be changed at set checkpoints page, so will not affect other pages
         self.cursor = 'Cursor'
-        self.track = ''
+        self.track = None
         self.track_config = None  # dictionary of track data
         # tp command, value will be used in eval()
         self.to_page = {'Home': 'self.set_home_page()', 'Start': 'self.set_start_page()',
                         'Tracks': 'self.set_tracks_page()', 'Settings_new': 'self.set_settings_page(True)',
-                        'New Training': 'self.new_training()'}
+                        'New Training': 'self.new_training()', 'Evaluate': 'self.evaluate()'}
         self.import_options = {'Img': 'self.import_file("img")', 'Txt': 'self.import_file("txt")'}
         # set current page to home page
         self.current_page = ''
-        self.text_box = None
         self.set_home_page()
         # a class wide temporary variable to that allows the pass data, should be deleted, not in use now
-        self.temp = None
 
     # end procedure
 
@@ -65,7 +64,7 @@ class GUI:
                 # try to add/delete a point given the cursor state and the mouse position, return None if no error
                 any_error = self.track_config.amend_point(self.cursor, mouse_pos)
                 if any_error is not None:  # any return other than None will be deemed as an error
-                    self.show_error(any_error)
+                    self.show_msg(any_error)
                 # end if
             else:
                 for button in self.buttons:
@@ -85,9 +84,6 @@ class GUI:
                         # end if
                     # end if
             # next button
-        if self.text_box is not None:
-            self.text_box.update(event)
-        # end procedure
 
     def draw(self):
         # always fill the background first
@@ -162,8 +158,6 @@ class GUI:
                 self.screen.blit(image_obj, image_rect)
             # end if
         # end if
-        if self.text_box is not None:
-            self.text_box.draw()
     # end procedure
 
     def reset(self):
@@ -173,6 +167,7 @@ class GUI:
         self.drawings.clear()
         self.images.clear()
         self.texts.clear()
+
     # end procedure
 
     def set_home_page(self):
@@ -201,17 +196,37 @@ class GUI:
 
         # button command to be fill after the simulator is created
         self.buttons.append(Button(self.screen, (1230, 160), Colours['black'], 'New Training', 'tpNew Training'))
-        self.buttons.append(Button(self.screen, (1230, 450), Colours['black'], 'Evaluate', 'tp'))
+        self.buttons.append(Button(self.screen, (1230, 450), Colours['black'], 'Evaluate', 'tpEvaluate'))
 
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 200), (1050, 200), 3)")
+
     # end procedure
 
     def new_training(self):
         self.reset()
-        g = simulator.Train(self.track, self.screen)
-        g.run()
+        if self.track is not None:
+            g = simulator.Train(self.track, self.screen)
+            g.run()
+            self.track = None
+        else:
+            GUI.show_msg('no_track_selected')
+        self.set_home_page()
     # end procedure
+
+    def evaluate(self):
+        self.reset()
+        nn_path = self.import_file('any')
+        if len(nn_path) == 0:
+            GUI.show_msg('no_file_selected')
+        elif self.track is not None:
+            g = simulator.Train(self.track, self.screen)
+            g.evaluate(nn_path)
+            GUI.show_msg('evaluation done')
+            self.track = None
+        else:
+            GUI.show_msg('no_track_selected')
+        self.set_home_page()
 
     def set_tracks_page(self):
         self.reset()
@@ -240,8 +255,7 @@ class GUI:
         # initialise the track config, if not initialised already
         if self.track_config is None:
             self.track_config = simulator.Config(track_name)
-            self.track_config.save()
-        config_path = os.path.join('./tracks', track_name+'config.txt')
+        config_path = os.path.join('./tracks', track_name + 'config.txt')
         # end if
 
         # get size data
@@ -255,7 +269,7 @@ class GUI:
         self.buttons.append(Button(self.screen, (1300, 695), Colours['black'], 'Settings',
                                    'exself.track_config.save()', font=button_font_medium))
         self.buttons.append(Button(self.screen, (1300, 695), Colours['black'], 'Settings',
-                                   'evos.startfile(r"'+config_path+'")', font=button_font_medium))
+                                   'evos.startfile(r"' + config_path + '")', font=button_font_medium))
         # add exit button
         self.buttons.append(Button(self.screen, (1300, 825), Colours['black'], 'EXIT',
                                    'exself.track_config.save()', font=button_font_medium))
@@ -265,7 +279,6 @@ class GUI:
         self.set_toolbar()  # create toolbar for this page
 
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1200, 0), (1200, 900), 3)")
-
     # end procedure
 
     def get_tracks(self, centre, width, to_settings=False):
@@ -290,9 +303,9 @@ class GUI:
         tracks.sort(key=lambda x: int(x[5]))
         if len(tracks) > 5:  # only show 5 tracks, and show an error message if there are more than 5 tracks
             tracks = tracks[:5]
-            GUI.show_error('track_overflow')
+            GUI.show_msg('track_overflow')
         elif len(tracks) == 0:  # show error message if there are no tracks
-            GUI.show_error('track_underflow')
+            GUI.show_msg('track_underflow')
         # end if
         track_num = len(tracks)
         track_num_div = track_num // 2
@@ -334,15 +347,18 @@ class GUI:
                                            img_path='resources/mask.png', img_size=(width, width + 34)))
             # next i
         # end if
+
     # end procedure
 
     def import_file(self, filetype):
         tkinter.Tk().withdraw()  # hide the tk main window
         # validation process is done by tkinter using filetypes parameter
-        validation = {'img': [('Image File', '*.png'), ('Image File', '*.jpg')], 'txt': [('Text File', '*.txt')]}
+        validation = { 'any': [], 'img': [('Image File', '*.png'), ('Image File', '*.jpg')]}
         file_path = filedialog.askopenfilename(title='Select a file', filetypes=validation[filetype])
-        if len(file_path) == 0:
-            GUI.show_error('no_file_selected')
+        if filetype == 'any':
+            return file_path
+        elif len(file_path) == 0:
+            GUI.show_msg('no_file_selected')
         elif filetype == 'img':
             track_no = []
             for file in os.listdir('tracks'):
@@ -357,7 +373,7 @@ class GUI:
                 # end if
             # next file
             if len(track_no) >= 5:
-                GUI.show_error('import_overflow')
+                GUI.show_msg('import_overflow')
             else:
                 track_no.sort()
                 for i in range(1, 6):
@@ -369,7 +385,9 @@ class GUI:
                     # end if
                 # next i
             # end if
+
         # end if
+
     # end procedure
 
     def set_toolbar(self):
@@ -388,10 +406,11 @@ class GUI:
             self.buttons.append(Button(self.screen, (1300, 60 + i * 130), None, '', 'tl' + tools[i],
                                        img_path='resources/mask.png', img_size=(170, 65)))
         # next i
+
     # end procedure
 
     @staticmethod
-    def show_error(error_type):
+    def show_msg(msg_type):
         tkinter.Tk().withdraw()  # hide the tk main window
         # messages contain what error message to show given the action
         messages = {'no_file_selected': 'Please select a file.',
@@ -403,8 +422,11 @@ class GUI:
                     'finish_line_already_set': 'Please remove the current finish line before setting a new one.',
                     'cursor_mismatch': 'Please finish setting the current point before use another cursor.',
                     'same_points_input': 'Cannot process two same points. Please try again.',
-                    'no_delete_point_selected': 'Please click a point shown on the map to delete it.'}
-        tkinter.messagebox.showerror('Error', messages[error_type])
+                    'no_delete_point_selected': 'Please click a point shown on the map to delete it.',
+                    'evaluation done': 'The neural network model is successfully evaluated.',
+                    'no_track_selected': 'Please select a track before training/evaluation.'}
+        tkinter.messagebox.showerror('Message', messages[msg_type])
+
     # end procedure
 
     @staticmethod
@@ -415,45 +437,8 @@ class GUI:
         text_box.center = centre
         surface.blit(text_obj, text_box)
     # end procedure
-# end class
 
 
-class Button:
-    """Create a button"""
-
-    def __init__(self, screen, centre, colour, text, action, font=button_font_large, img_path=None, img_size=None):
-        self.screen = screen
-        if img_path is not None:  # if image button
-            self.action = action
-            self.image = pygame.image.load(img_path)
-            self.image = pygame.transform.scale(self.image, img_size)
-            self.image = self.image.convert_alpha()
-            # self.image.set_alpha(100)  # for testing only
-            self.rect = self.image.get_rect()  # image rect, name it rect for sprite group draw
-            self.rect.center = centre
-        else:  # if text button
-            self.action = action
-            self.font = font
-            self.image = self.font.render(text, True, colour)  # text object, name it image for sprite group draw
-            self.rect = self.image.get_rect()  # text rect, name it rect for sprite group draw
-            self.rect.center = centre
-        # end if
-    # end procedure
-
-    def update(self, mouse_pos):
-        if self.rect.collidepoint(mouse_pos):
-            return True
-        # end if
-        return False
-    # end function
-
-    def draw(self):
-        self.screen.blit(self.image, self.rect)
-    # end procedure
-
-    def clicked(self):
-        return self.action
-    # end function
 # end class
 
 
