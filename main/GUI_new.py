@@ -7,10 +7,8 @@ from tkinter import messagebox
 import shutil
 import simulator
 from button import Button
+import subprocess
 
-"""
-20/5/22 notes: text box not finished yet. should be reviewed (or redo) after the simulator done. 
-"""
 
 # Initialize pygame, must done at the beginning, before any other pygame function
 pygame.init()
@@ -28,9 +26,9 @@ text_font_small = pygame.font.Font('fonts/times.ttf', 15)  # times new roman, si
 class GUI:
     """All the GUI elements of the program"""
 
-    def __init__(self, width, height):
+    def __init__(self):
         # set screen size
-        self.screen = pygame.display.set_mode((width, height))
+        self.screen = pygame.display.set_mode((1400, 900))
         # actions of tp command, value will be used in eval()
         # buttons should be drawn at the end, to make sure no buttons are covered by other images
         self.buttons = []  # list of buttons, append button objects
@@ -43,8 +41,8 @@ class GUI:
         self.track_config = None  # dictionary of track data
         # tp command, value will be used in eval()
         self.to_page = {'Home': 'self.set_home_page()', 'Start': 'self.set_start_page()',
-                        'Tracks': 'self.set_tracks_page()', 'Settings_new': 'self.set_settings_page(True)',
-                        'New Training': 'self.new_training()', 'Evaluate': 'self.evaluate()'}
+                        'Tracks': 'self.set_tracks_page()', 'New Training': 'self.new_training()',
+                        'Evaluate': 'self.evaluate()'}
         self.import_options = {'Img': 'self.import_file("img")', 'Txt': 'self.import_file("txt")'}
         # set current page to home page
         self.current_page = ''
@@ -195,8 +193,8 @@ class GUI:
                                    img_size=(40, 40)))
 
         # button command to be fill after the simulator is created
-        self.buttons.append(Button(self.screen, (1230, 160), Colours['black'], 'New Training', 'tpNew Training'))
-        self.buttons.append(Button(self.screen, (1230, 450), Colours['black'], 'Evaluate', 'tpEvaluate'))
+        self.buttons.append(Button(self.screen, (1230, 300), Colours['black'], 'New Training', 'tpNew Training'))
+        self.buttons.append(Button(self.screen, (1230, 600), Colours['black'], 'Evaluate', 'tpEvaluate'))
 
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 200), (1050, 200), 3)")
@@ -205,6 +203,7 @@ class GUI:
 
     def new_training(self):
         self.reset()
+        self.current_page = 'New training'
         if self.track is not None:
             g = simulator.Train(self.track, self.screen)
             g.run()
@@ -216,6 +215,8 @@ class GUI:
 
     def evaluate(self):
         self.reset()
+        self.current_page = 'Evaluate'
+
         nn_path = self.import_file('any')
         if len(nn_path) == 0:
             GUI.show_msg('no_file_selected')
@@ -253,9 +254,7 @@ class GUI:
         self.current_page = 'Edit Checkpoints'
 
         # initialise the track config, if not initialised already
-        if self.track_config is None:
-            self.track_config = simulator.Config(track_name)
-        config_path = os.path.join('./tracks', track_name + 'config.txt')
+        self.track_config = simulator.Config(track_name)
         # end if
 
         # get size data
@@ -269,7 +268,7 @@ class GUI:
         self.buttons.append(Button(self.screen, (1300, 695), Colours['black'], 'Settings',
                                    'exself.track_config.save()', font=button_font_medium))
         self.buttons.append(Button(self.screen, (1300, 695), Colours['black'], 'Settings',
-                                   'evos.startfile(r"' + config_path + '")', font=button_font_medium))
+                                   'exself.settings("' + track_name + '")', font=button_font_medium))
         # add exit button
         self.buttons.append(Button(self.screen, (1300, 825), Colours['black'], 'EXIT',
                                    'exself.track_config.save()', font=button_font_medium))
@@ -280,6 +279,17 @@ class GUI:
 
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1200, 0), (1200, 900), 3)")
     # end procedure
+
+    def settings(self, track_name):
+        pygame.display.quit()
+        process = subprocess.Popen([
+            r'C:\WINDOWS\system32\notepad.exe',
+            os.path.join('./tracks', track_name + 'config.txt')
+        ])
+        process.wait()
+        pygame.display.init()
+        self.screen = pygame.display.set_mode((1400, 900))
+        self.set_checkpoints_page(track_name)
 
     def get_tracks(self, centre, width, to_settings=False):
         """Get all tracks from the tracks folder, display a error message if more than 5 tracks are found"""
@@ -445,7 +455,7 @@ class GUI:
 # game function
 def run():
     """Run the GUI"""
-    Interface = GUI(1400, 900)
+    Interface = GUI()
     clock = pygame.time.Clock()
     while True:
         # User input and control

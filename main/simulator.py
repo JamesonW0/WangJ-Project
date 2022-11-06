@@ -23,10 +23,11 @@ class Config:
 
     def __init__(self, track_name):
         # initiate the track
-        self.track_config_path = 'tracks/' + track_name[:6] + 'config.txt'
-        self.nn_config_path = 'NN/NN' + track_name[:6] + 'config.txt'
+        self.track_config_path = 'tracks/' + track_name + 'config.txt'
+        self.nn_config_path = 'NN/NN' + track_name[-1] + 'config.txt'
         self.track_path = './tracks/' + track_name + '.png'
-        self.img = Image.open(self.track_path)
+        self.img = pygame.image.load(self.track_path)
+        self.img = pygame.transform.scale(self.img, (1200, 900))
         # initiate the corresponding config object for the track
         self.track_config_obj = ConfigParser()
         if self.check_validity(self.track_config_path):
@@ -42,7 +43,7 @@ class Config:
 
     def new_config(self):
         # size and ratio for showing onto the pygame screen and converting data
-        size = self.img.size
+        size = self.img.get_size()
         self.track_config_obj['CHECKPOINTS'] = {
             'START': ((-1, -1), -1, (-1, -1), (-1, -1)),  # (midpoint, radius, edge_1, edge_2)
             'FINISH': ((-1, -1), -1, (-1, -1), (-1, -1)),  # (midpoint, radius, edge_1, edge_2)
@@ -77,7 +78,7 @@ class Config:
 
     def amend_point(self, cursor, mouse_pos):
         # detect if any errors occur, information is returned shows which error is it
-        if self.img.getpixel((mouse_pos[0], mouse_pos[1]))[:3] == (255, 255, 255):
+        if self.img.get_at((mouse_pos[0], mouse_pos[1])) != (0, 0, 0, 255):
             return 'point_not_on_track'
         elif self.last_cursor is not None and self.last_cursor != cursor:
             return 'cursor_mismatch'
@@ -167,29 +168,29 @@ class Config:
         radius_square = []  # by x square, then by y square
         # calculate the end points of the track with variable x, given run is not 0
         if run != 0:
-            colour_a = None
+            colour = (0, 0, 0, 255)
             x = self.coordinates[0][0]
             # increase x to find the first coordinate
-            while colour_a != 0:
+            while colour == (0, 0, 0, 255):
                 x += 1
                 y = calculate_y(x)
                 try:  # might be going out the map
-                    colour_a = self.img.getpixel((int(x), int(y)))[-1]
+                    colour = self.img.get_at((int(x), int(y)))
                 except IndexError:
-                    colour_a = 0
+                    colour = (1, 1, 1, 1)
                 # end try
             # end while
             coordinates_by_x.append((x, y))
             # decrease x to find the second coordinate
-            colour_a = None
+            colour = (0, 0, 0, 255)
             x = self.coordinates[0][0]
-            while colour_a != 0:
+            while colour == (0, 0, 0, 255):
                 x -= 1
                 y = calculate_y(x)
                 try:  # might be going out the map
-                    colour_a = self.img.getpixel((int(x), int(y)))[-1]
+                    colour = self.img.get_at((int(x), int(y)))
                 except IndexError:
-                    colour_a = 0
+                    colour = (1, 1, 1, 1)
                 # end try
             # end while
             coordinates_by_x.append((x, y))
@@ -198,29 +199,29 @@ class Config:
         # end if
         # calculate the end points of the track with variable y, given rise is not zero
         if rise != 0:
-            colour_a = None
+            colour = (0, 0, 0, 255)
             y = self.coordinates[0][1]
             # increase y to find the first coordinate
-            while colour_a != 0:
+            while colour == (0, 0, 0, 255):
                 y += 1
                 x = calculate_x(y)
                 try:  # might be going out the map
-                    colour_a = self.img.getpixel((int(x), int(y)))[-1]
+                    colour = self.img.get_at((int(x), int(y)))
                 except IndexError:
-                    colour_a = 0
+                    colour = (1, 1, 1, 1)
                 # end try
             # end while
             coordinates_by_y.append((x, y))
             # decrease x to find the second coordinate
-            colour_a = None
+            colour = (0, 0, 0, 255)
             y = self.coordinates[0][1]
-            while colour_a != 0:
+            while colour == (0, 0, 0, 255):
                 y -= 1
                 x = calculate_x(y)
                 try:  # might be going out the map
-                    colour_a = self.img.getpixel((int(x), int(y)))[-1]
+                    colour = self.img.get_at((int(x), int(y)))
                 except IndexError:
-                    colour_a = 0
+                    colour = (1, 1, 1, 1)
                 # end try
             # end while
             coordinates_by_y.append((x, y))
@@ -292,6 +293,8 @@ class Config:
 
         nn_config_obj.set('NEAT', 'pop_size', str(self.get_item('NN', 'POPULATION')))
         nn_config_obj.set('DefaultGenome', 'activation_mutate_rate', str(self.get_item('NN', 'MUTATION RATE')))
+        nn_config_obj.set('DefaultGenome', 'aggregation_mutate_rate', str(self.get_item('NN', 'MUTATION RATE')))
+        nn_config_obj.set('DefaultGenome', 'enabled_mutate_rate', str(self.get_item('NN', 'MUTATION RATE')))
         with open(self.nn_config_path, 'w') as file:
             nn_config_obj.write(file)
         # end with
@@ -676,7 +679,7 @@ class Train:
 
     def save_checkpoint(self, config, population, species_set, generation):
         """ Save the current simulation state. """
-        filename = 'NN-checkpoint-T' + self.track_path[-5] + '-G' + str(self.generation_no) + '-' + str(time.time())
+        filename = 'NN/NN-checkpoint-T' + self.track_path[-5] + '-G' + str(self.generation_no) + '-' + str(time.time())
         print("Saving checkpoint to {0}".format(filename))
 
         with gzip.open(filename, 'w', compresslevel=5) as f:
