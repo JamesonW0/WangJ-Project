@@ -2,18 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4f819bd5-930f-490f-842d-b18a45f3ccb2" name="Changes" comment="update">
-      <change afterPath="$PROJECT_DIR$/main/NN-checkpoint-T1-G1-1667693984.2215493" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main/NN/NNtrack2config.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/main/NN/NN2config.txt" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/main/tracks/track2config.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/GUI_new.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/GUI_new.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/simulator.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/simulator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/tracks/track1.png" beforeDir="false" afterPath="$PROJECT_DIR$/main/tracks/track1.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/tracks/track1config.txt" beforeDir="false" afterPath="$PROJECT_DIR$/main/tracks/track1config.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/tracks/track2.png" beforeDir="false" afterPath="$PROJECT_DIR$/main/tracks/track2.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/tracks/track3.png" beforeDir="false" afterPath="$PROJECT_DIR$/main/tracks/track3.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/tracks/track4.png" beforeDir="false" afterPath="$PROJECT_DIR$/main/tracks/track4.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/tracks/track5.png" beforeDir="false" afterPath="$PROJECT_DIR$/main/tracks/track5.png" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,7 +43,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
-  <component name="RunManager" selected="Python.GUI_new">
+  <component name="RunManager" selected="Python.main">
     <configuration name="GUI_new" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="WangJ-Project" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -95,7 +86,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="old_NN" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="WangJ-Project" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -107,7 +98,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main/old_NN.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main/main.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -160,18 +151,18 @@
     </configuration>
     <list>
       <item itemvalue="Python.simulator" />
-      <item itemvalue="Python.old_NN" />
       <item itemvalue="Python.test" />
       <item itemvalue="Python.house" />
       <item itemvalue="Python.GUI_new" />
+      <item itemvalue="Python.main" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.main" />
         <item itemvalue="Python.GUI_new" />
         <item itemvalue="Python.simulator" />
         <item itemvalue="Python.test" />
         <item itemvalue="Python.house" />
-        <item itemvalue="Python.old_NN" />
       </list>
     </recent_temporary>
   </component>
@@ -219,7 +210,14 @@
       <option name="project" value="LOCAL" />
       <updated>1667694784779</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="update">
+      <created>1667755478117</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1667755478117</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
