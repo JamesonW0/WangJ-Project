@@ -2,9 +2,22 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4f819bd5-930f-490f-842d-b18a45f3ccb2" name="Changes" comment="update">
-      <change afterPath="$PROJECT_DIR$/main/NN/NN2config.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main/tracks/track2config.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imp_use/resources/blue.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imp_use/resources/car.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imp_use/resources/cursor.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imp_use/resources/delete.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imp_use/resources/home.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imp_use/resources/mask.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imp_use/sim_c.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imp_use/tracks/track1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imp_use/tracks/track1config.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imp_use/tracks/track2.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imp_use/tracks/track2config.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imp_use/tracks/track3.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imp_use/tracks/track4.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imp_use/tracks/track5.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/simulator.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/simulator.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,7 +54,13 @@
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/imp_use" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Jameson Wang\Documents\GitHub\WangJ-Project\imp_use" />
+    </key>
   </component>
   <component name="RunManager" selected="Python.main">
     <configuration name="GUI_new" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
@@ -57,27 +76,6 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main/GUI_new.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="house" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="PyGame" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="D:/DESKTOP/PyGame/House of the Rising Sun" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="D:/DESKTOP/PyGame/House of the Rising Sun/house.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -107,6 +105,27 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="sim_c" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="WangJ-Project" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/imp_use" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/imp_use/sim_c.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="simulator" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="WangJ-Project" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -128,19 +147,19 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="WangJ-Project" />
+    <configuration name="simulator_copy" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Project Reference" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/main" />
-      <option name="IS_MODULE_SDK" value="true" />
+      <option name="SDK_HOME" value="D:\Anaconda\envs\CS_Project\python.exe" />
+      <option name="WORKING_DIRECTORY" value="D:/DESKTOP/Project Reference/used_for_implementation" />
+      <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main/test.py" />
+      <option name="SCRIPT_NAME" value="D:/DESKTOP/Project Reference/used_for_implementation/simulator_copy.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -150,19 +169,19 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.simulator" />
-      <item itemvalue="Python.test" />
-      <item itemvalue="Python.house" />
       <item itemvalue="Python.GUI_new" />
       <item itemvalue="Python.main" />
+      <item itemvalue="Python.simulator" />
+      <item itemvalue="Python.simulator_copy" />
+      <item itemvalue="Python.sim_c" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python.main" />
+        <item itemvalue="Python.sim_c" />
+        <item itemvalue="Python.simulator_copy" />
         <item itemvalue="Python.GUI_new" />
         <item itemvalue="Python.simulator" />
-        <item itemvalue="Python.test" />
-        <item itemvalue="Python.house" />
       </list>
     </recent_temporary>
   </component>
@@ -217,7 +236,14 @@
       <option name="project" value="LOCAL" />
       <updated>1667755478117</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="update">
+      <created>1667997862803</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1667997862803</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

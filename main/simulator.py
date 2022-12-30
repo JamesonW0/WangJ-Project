@@ -3,7 +3,6 @@ import random
 import pygame
 import ast
 from configparser import ConfigParser
-from PIL import Image
 import os
 import math
 import neat
@@ -38,7 +37,6 @@ class Config:
         # two variables for amend_point
         self.coordinates = [(-1, -1), (-1, -1)]
         self.last_cursor = None
-
     # end procedure
 
     def new_config(self):
@@ -61,8 +59,8 @@ class Config:
             'MAX SPEED': 15.0,  # Maximum speed the car can travel
             'MIN SPEED': 5.0,  # Maximum speed the car can travel
             'SPEED STEP': 1.0,  # The value for the speed to change each time
-            'LENGTH': 60.0,  # The length of the car in pixels
-            'WIDTH': 60.0,  # The width of the car in pixels
+            'LENGTH': 45.0,  # The length of the car in pixels
+            'WIDTH': 25.0,  # The width of the car in pixels
             'TURNING ANGLE': 7,  # angle the car can turn in degrees, max 10 degrees
         }
         self.track_config_obj['NN'] = {
@@ -308,7 +306,8 @@ class Config:
             config_obj.read(file_path)
             sections = config_obj.sections()
             # sections not right
-            if 'CHECKPOINTS' not in sections or 'TRACK' not in sections or 'CAR' not in sections or 'NN' not in sections:
+            if 'CHECKPOINTS' not in sections or 'DISPLAY' not in sections or 'TRACK' not in sections or 'CAR' \
+                    not in sections or 'NN' not in sections:
                 return False
             else:  # exists with correct sections
                 return True
@@ -321,25 +320,23 @@ class Config:
 class Car:
 
     def __init__(self, config, track):
-        # initialise car sprite object and its rotate object
-        # load car dimension (x, y) from config
+        # load initialising data from config
         self.car_dimension = (config.get_item('CAR', 'LENGTH'), config.get_item('CAR', 'WIDTH'))
+        self.centre = [int(config.get_item('CHECKPOINTS', 'START')[0][0]), int(config.get_item('CHECKPOINTS', 'START')[0][1])]
+        self.angle = config.get_item('TRACK', 'START ANGLE')
+
+        # initialise car sprite object and its rotate object
         self.car_sprite = pygame.image.load('resources/car.png')
         self.car_sprite = pygame.transform.scale(self.car_sprite, self.car_dimension)
         self.rotated_sprite = self.car_sprite
-
-        # load starting data from config
-        self.centre = [int(config.get_item('CHECKPOINTS', 'START')[0][0]), int(config.get_item('CHECKPOINTS', 'START')[0][1])]
         self.car_rect = self.rotated_sprite.get_rect()
         self.car_rect.center = self.centre
-        self.angle = config.get_item('TRACK', 'START ANGLE')
 
         # load speed variables
         self.max_speed = config.get_item('CAR', 'MAX SPEED')
         self.min_speed = config.get_item('CAR', 'MIN SPEED')
         self.initial_speed = config.get_item('CAR', 'SPEED')
         self.speed = 0
-
         self.speed_set = False  # flag for default speed to be set
 
         self.radars = []  # list of radars
@@ -382,7 +379,6 @@ class Car:
             pygame.draw.line(screen, (0, 255, 0), self.centre, end_pos, 1)
             pygame.draw.circle(screen, (0, 255, 0), end_pos, 3)
         # next radar
-
     # end procedure
 
     def check_collision(self):
@@ -514,8 +510,6 @@ class Car:
         rotated_img = pygame.transform.rotozoom(img, angle, 1)
         return rotated_img
     # end function
-
-
 # end class
 
 
