@@ -2,22 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4f819bd5-930f-490f-842d-b18a45f3ccb2" name="Changes" comment="update">
-      <change afterPath="$PROJECT_DIR$/imp_use/resources/blue.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/imp_use/resources/car.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/imp_use/resources/cursor.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/imp_use/resources/delete.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/imp_use/resources/home.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/imp_use/resources/mask.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/imp_use/sim_c.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/imp_use/tracks/track1.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/imp_use/tracks/track1config.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/imp_use/tracks/track2.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/imp_use/tracks/track2config.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/imp_use/tracks/track3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/imp_use/tracks/track4.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/imp_use/tracks/track5.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/simulator.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/simulator.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -243,7 +228,14 @@
       <option name="project" value="LOCAL" />
       <updated>1667997862803</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="update">
+      <created>1672431872808</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1672431872808</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
