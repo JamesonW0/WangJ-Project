@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="4f819bd5-930f-490f-842d-b18a45f3ccb2" name="Changes" comment="update">
-      <change beforePath="$PROJECT_DIR$/main/simulator.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/simulator.py" afterDir="false" />
-    </list>
+    <list default="true" id="4f819bd5-930f-490f-842d-b18a45f3ccb2" name="Changes" comment="update" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -242,7 +240,14 @@
       <option name="project" value="LOCAL" />
       <updated>1672759098786</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="update">
+      <created>1672759420421</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1672759420421</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

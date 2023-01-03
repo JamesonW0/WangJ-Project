@@ -487,10 +487,13 @@ class Car:
 
         if (self.centre[0] - self.checkpoints[0][0][0]) ** 2 + (self.centre[1] - self.checkpoints[0][0][1]) ** 2 <= \
                 (self.checkpoints[0][1]/2) ** 2:
+
+            del self.checkpoints[0]
+
             if len(self.checkpoints) == 0:
                 self.alive = False
                 return 10000
-            del self.checkpoints[0]
+
             self.old_dist_to_checkpoint = math.sqrt((self.centre[0] - self.checkpoints[0][0][0]) ** 2 +
                                                     (self.centre[1] - self.checkpoints[0][0][1]) ** 2)  # Pythagoras
             self.new_dist_to_checkpoint = 0
