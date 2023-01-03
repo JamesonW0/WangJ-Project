@@ -482,7 +482,7 @@ class Car:
         self.new_dist_to_checkpoint = math.sqrt((self.centre[0] - self.checkpoints[0][0][0]) ** 2 +
                                                 (self.centre[1] - self.checkpoints[0][0][1]) ** 2)  # Pythagoras
         reward = self.old_dist_to_checkpoint - self.new_dist_to_checkpoint
-        reward += self.speed  # distance reward
+        reward += self.speed  # survival reward
         self.old_dist_to_checkpoint = self.new_dist_to_checkpoint
 
         if (self.centre[0] - self.checkpoints[0][0][0]) ** 2 + (self.centre[1] - self.checkpoints[0][0][1]) ** 2 <= \
