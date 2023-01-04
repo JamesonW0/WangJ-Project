@@ -557,16 +557,18 @@ class Train:
 
     def eval_choice(self):
         for i, car in enumerate(self.cars):
-            output = self.nets[i].activate(car.get_data())
-            choice = output.index(max(output))
-            if choice == 0:
-                car.change_direction(self.turning_angle)  # Left
-            elif choice == 1:
-                car.change_direction(-self.turning_angle)  # Right
-            elif choice == 2:
-                car.change_speed(self.speed_step)  # Accelerate
-            else:
-                car.change_speed(-self.speed_step)  # Decelerate
+            if car.get_alive():
+                output = self.nets[i].activate(car.get_data())
+                choice = output.index(max(output))
+                if choice == 0:
+                    car.change_direction(self.turning_angle)  # Left
+                elif choice == 1:
+                    car.change_direction(-self.turning_angle)  # Right
+                elif choice == 2:
+                    car.change_speed(self.speed_step)  # Accelerate
+                else:
+                    car.change_speed(-self.speed_step)  # Decelerate
+                # end if
             # end if
         # next car/i
     # end procedure
