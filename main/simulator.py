@@ -532,12 +532,12 @@ class Train:
         self.track = pygame.image.load('tracks/track1.png')
         self.track = pygame.transform.scale(self.track, (1200, 900))
 
-        # load config file path
-        self.nn_config_path = './NN/NN' + track_name[-1] + 'config.txt'
-
         # load track and adjust the size
         self.track = pygame.image.load(self.track_path)
         self.track = pygame.transform.scale(self.track, (1200, 900))
+
+        # load config file path
+        self.nn_config_path = './NN/NN' + track_name[-1] + 'config.txt'
 
         # load config files
         self.track_config = Config(track_name)
@@ -571,7 +571,7 @@ class Train:
         # next car/i
     # end procedure
 
-    def generation(self, genomes, config):
+    def eval_genomes(self, genomes, config):
         # empty the car and net lists for the next generation
         self.cars.clear()
         self.nets.clear()
@@ -663,7 +663,7 @@ class Train:
 
         # Run Simulation For A Maximum of 1000 Generations
         try:
-            self.population.run(self.generation, 1000)
+            self.population.run(self.eval_genomes, 1000)
         except pygame.error:
             pygame.init()
 
@@ -673,7 +673,7 @@ class Train:
         stats = neat.StatisticsReporter()
         self.population.add_reporter(stats)
         try:
-            self.population.run(self.generation, 1)
+            self.population.run(self.eval_genomes, 1)
         except pygame.error:
             pygame.init()
 

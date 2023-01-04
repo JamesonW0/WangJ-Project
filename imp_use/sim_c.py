@@ -3,6 +3,7 @@ import os
 import math
 import sys
 import time
+import neat
 
 
 class Car:
@@ -198,4 +199,13 @@ if __name__ == '__main__':
     run()
 # end if
 
+# nn_config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
+#                                    neat.DefaultStagnation, 'file_path')
 
+# create car instance and net for each genome
+# for i, genome in genomes:
+#    net = neat.nn.FeedForwardNetwork.create(genome, config)
+#    self.nets.append(net)
+#    genome.fitness = 0
+#    self.cars.append(Car(self.track_config, self.track))
+# next genome/i
