@@ -634,6 +634,7 @@ class Train:
                 break
             # end if
 
+            # Drawing here
             self.screen.fill('white')
             self.screen.blit(self.track, (0, 0))
             for car in self.cars:
@@ -642,7 +643,6 @@ class Train:
                 # end if
             # next car
 
-            # Drawing here
             pygame.draw.line(self.screen, (143, 170, 220), (1203, 0), (1203, 900), 3)
             for button in buttons:
                 button.draw()
