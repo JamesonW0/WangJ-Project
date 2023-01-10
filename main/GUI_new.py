@@ -48,7 +48,6 @@ class GUI:
         self.current_page = ''
         self.set_home_page()
         # a class wide temporary variable to that allows the pass data, should be deleted, not in use now
-
     # end procedure
 
     def update(self, event):
@@ -73,9 +72,9 @@ class GUI:
                             eval(self.to_page[action[2:]])
                         elif action[:2] == 'im':  # import file
                             eval(self.import_options[action[2:]])
-                        elif action[:2] == 'ex':  # execute the command
+                        elif action[:2] == 'ex':  # execute
                             exec(action[2:])
-                        elif action[:2] == 'ev':  # show text
+                        elif action[:2] == 'ev':  # evaluate
                             eval(action[2:])
                         elif action[:2] == 'tl':  # set cursor to the tool selected
                             self.cursor = action[2:]
@@ -165,7 +164,6 @@ class GUI:
         self.drawings.clear()
         self.images.clear()
         self.texts.clear()
-
     # end procedure
 
     def set_home_page(self):
@@ -189,12 +187,12 @@ class GUI:
 
         # get and add tracks to images list to be drawn
         self.get_tracks((525, 100), 100)
-        self.buttons.append(Button(self.screen, (22, 877), None, '', 'tpHome', img_path='resources/home.png',
-                                   img_size=(40, 40)))
 
         # button command to be fill after the simulator is created
         self.buttons.append(Button(self.screen, (1230, 300), Colours['black'], 'New Training', 'tpNew Training'))
         self.buttons.append(Button(self.screen, (1230, 600), Colours['black'], 'Evaluate', 'tpEvaluate'))
+        self.buttons.append(Button(self.screen, (22, 877), None, '', 'tpHome', img_path='resources/home.png',
+                                   img_size=(40, 40)))
 
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 200), (1050, 200), 3)")
@@ -244,7 +242,6 @@ class GUI:
 
         self.texts.append(('Select a track to edit', text_font_large, Colours['black'], (700, 100)))
         self.texts.append(('Or import a new track', text_font_large, Colours['black'], (700, 500)))
-
     # end procedure
 
     def set_checkpoints_page(self, track_name):
@@ -357,18 +354,18 @@ class GUI:
                                            img_path='resources/mask.png', img_size=(width, width + 34)))
             # next i
         # end if
-
     # end procedure
 
     def import_file(self, filetype):
         tkinter.Tk().withdraw()  # hide the tk main window
         # validation process is done by tkinter using filetypes parameter
-        validation = { 'any': [], 'img': [('Image File', '*.png'), ('Image File', '*.jpg')]}
+        validation = {'any': [], 'img': [('Image File', '*.png'), ('Image File', '*.jpg')]}
         file_path = filedialog.askopenfilename(title='Select a file', filetypes=validation[filetype])
+
+        if len(file_path) == 0:
+            GUI.show_msg('no_file_selected')
         if filetype == 'any':
             return file_path
-        elif len(file_path) == 0:
-            GUI.show_msg('no_file_selected')
         elif filetype == 'img':
             track_no = []
             for file in os.listdir('tracks'):
@@ -447,8 +444,6 @@ class GUI:
         text_box.center = centre
         surface.blit(text_obj, text_box)
     # end procedure
-
-
 # end class
 
 
@@ -467,8 +462,6 @@ def run():
         pygame.display.flip()  # flip the display to renew
         clock.tick(60)  # limit the frame rate to 60
     # end while
-
-
 # end procedure
 
 

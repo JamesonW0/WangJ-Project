@@ -24,7 +24,6 @@ class Button:
             self.rect = self.image.get_rect()  # text rect, name it rect for sprite group draw
             self.rect.center = centre
         # end if
-
     # end procedure
 
     def update(self, mouse_pos):
@@ -32,17 +31,13 @@ class Button:
             return True
         # end if
         return False
-
     # end function
 
     def draw(self):
         self.screen.blit(self.image, self.rect)
-
     # end procedure
 
     def clicked(self):
         return self.action
     # end function
-
-
 # end class

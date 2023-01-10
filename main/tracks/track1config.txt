@@ -11,8 +11,8 @@ simulator size = (1200, 900)
 start angle = -3
 
 [CAR]
-speed = 10.0
-max speed = 15.0
+speed = 7.0
+max speed = 10.0
 min speed = 5.0
 speed step = 1.0
 length = 45.0

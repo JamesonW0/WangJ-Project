@@ -11,10 +11,6 @@ import time
 import pickle
 import neat.six_util
 import neat.math_util
-from button import Button
-
-button_font_medium = pygame.font.Font('fonts/comicbd.ttf', 35)
-button_font_small = pygame.font.Font('fonts/comicbd.ttf', 25)  # comic sans MS, size 25, bold
 
 
 class Config:
@@ -346,22 +342,13 @@ class Car:
 
         self.corners = []  # position of the corners of the car to check alive
         # referential data to locate the corner [[angles(rad)], length]
-        internal_angle = math.atan(self.car_dimension[1] / self.car_dimension[0])
+        internal_angle = math.atan(self.car_dimension[0] / self.car_dimension[1])
         self.corner_ref = [[internal_angle, math.pi - internal_angle, math.pi + internal_angle, -internal_angle],
                            (math.sqrt(self.car_dimension[0] ** 2 + self.car_dimension[1] ** 2)) * 0.5 * 0.92]
 
         # attributes for reward function
         self.distance = 0  # total distance driven
         self.time = 0  # total time passed
-        self.checkpoints = config.get_item('CHECKPOINTS', 'CHECKPOINTS')
-        self.checkpoints.append(config.get_item('CHECKPOINTS', 'FINISH'))
-        # cut other irrelevant items
-        for i in range(len(self.checkpoints)):
-            self.checkpoints[i] = self.checkpoints[i][:2]
-        # next i
-        self.old_dist_to_checkpoint = math.sqrt((self.centre[0] - self.checkpoints[0][0][0]) ** 2 +
-                                                (self.centre[1] - self.checkpoints[0][0][1]) ** 2)  # Pythagoras
-        self.new_dist_to_checkpoint = 0
 
         self.track = track
         # Get the track colour, for collision and radar
@@ -371,6 +358,10 @@ class Car:
     def draw(self, screen):
         screen.blit(self.rotated_sprite, self.car_rect)  # draw the car
         self.draw_radar(screen)  # draw radars
+        ''''
+        for point in self.corners:
+            pygame.draw.circle(screen, pygame.Color('blue'), (int(point[0]), int(point[1])), 3)
+        '''
     # end procedure
 
     def draw_radar(self, screen):
@@ -479,24 +470,7 @@ class Car:
 
     def get_reward(self):
         # should be changed
-        self.new_dist_to_checkpoint = math.sqrt((self.centre[0] - self.checkpoints[0][0][0]) ** 2 +
-                                                (self.centre[1] - self.checkpoints[0][0][1]) ** 2)  # Pythagoras
-        reward = self.old_dist_to_checkpoint - self.new_dist_to_checkpoint
-        reward += self.speed  # survival reward
-        self.old_dist_to_checkpoint = self.new_dist_to_checkpoint
-
-        if (self.centre[0] - self.checkpoints[0][0][0]) ** 2 + (self.centre[1] - self.checkpoints[0][0][1]) ** 2 <= \
-                (self.checkpoints[0][1]/2) ** 2:
-
-            del self.checkpoints[0]
-
-            if len(self.checkpoints) == 0:
-                self.alive = False
-                return 10000
-
-            self.old_dist_to_checkpoint = math.sqrt((self.centre[0] - self.checkpoints[0][0][0]) ** 2 +
-                                                    (self.centre[1] - self.checkpoints[0][0][1]) ** 2)  # Pythagoras
-            self.new_dist_to_checkpoint = 0
+        reward = self.distance/self.time
         return reward
     # end function
 
@@ -590,30 +564,11 @@ class Train:
 
         # pygame
         clock = pygame.time.Clock()
-        buttons = [Button(self.screen, (1300, 200), (0, 0, 0), 'Save', 'save', button_font_medium),
-                   Button(self.screen, (1300, 450), (0, 0, 0), 'Exit', 'exit', button_font_medium),
-                   Button(self.screen, (1300, 700), (0, 0, 0), 'Save & Exit', 'save&exit', button_font_small)]
         while True:
             # Exit On Quit Event
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit(0)
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # check for buttons
-                    for button in buttons:
-                        if button.update(event.pos):
-                            action = button.clicked()
-                            if action == 'save':
-                                self.save_checkpoint(self.nn_config, self.population.population,
-                                                     self.population.species, self.generation_no)
-                            elif action == 'exit':
-                                raise pygame.error
-                            elif action == 'save&exit':
-                                self.save_checkpoint(self.nn_config, self.population.population,
-                                                     self.population.species, self.generation_no)
-                                raise pygame.error
-                            # end if
-                        # end if
-                    # next button
                 # end if
             # next event
 
@@ -642,11 +597,6 @@ class Train:
                     car.draw(self.screen)
                 # end if
             # next car
-
-            pygame.draw.line(self.screen, (143, 170, 220), (1203, 0), (1203, 900), 3)
-            for button in buttons:
-                button.draw()
-            # next button
 
             pygame.display.flip()
             clock.tick(60)  # 60 FPS
