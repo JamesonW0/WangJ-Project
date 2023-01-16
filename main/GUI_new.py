@@ -176,7 +176,6 @@ class GUI:
         self.buttons.append(Button(self.screen, (1230, 220), Colours['black'], 'Start', 'tpStart'))
         self.buttons.append(Button(self.screen, (1230, 650), Colours['black'], 'Tracks', 'tpTracks'))
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
-
     # end procedure
 
     def set_start_page(self):
@@ -196,7 +195,6 @@ class GUI:
 
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (0, 200), (1050, 200), 3)")
-
     # end procedure
 
     def new_training(self):
@@ -226,6 +224,8 @@ class GUI:
         else:
             GUI.show_msg('no_track_selected')
         self.set_home_page()
+        # end if
+    # end procedure
 
     def set_tracks_page(self):
         self.reset()
@@ -392,9 +392,7 @@ class GUI:
                     # end if
                 # next i
             # end if
-
         # end if
-
     # end procedure
 
     def set_toolbar(self):
@@ -413,7 +411,6 @@ class GUI:
             self.buttons.append(Button(self.screen, (1300, 60 + i * 130), None, '', 'tl' + tools[i],
                                        img_path='resources/mask.png', img_size=(170, 65)))
         # next i
-
     # end procedure
 
     @staticmethod

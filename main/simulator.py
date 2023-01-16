@@ -241,7 +241,7 @@ class Config:
                         (coordinates_by_x[0][0] - 1, calculate_y(coordinates_by_x[0][0] - 1)),
                         (coordinates_by_x[1][0] + 1, calculate_y(coordinates_by_x[1][0] + 1)))
             # end if
-        if radius_square[0] < radius_square[1]:
+        elif radius_square[0] < radius_square[1]:
             return (((coordinates_by_x[0][0] + coordinates_by_x[1][0]) / 2,
                      (calculate_y(coordinates_by_x[0][0] - 5) + calculate_y(coordinates_by_x[1][0] + 5)) / 2),
                     pow(radius_square[0], 0.5), (coordinates_by_x[0][0] - 5, calculate_y(coordinates_by_x[0][0] - 5)),
