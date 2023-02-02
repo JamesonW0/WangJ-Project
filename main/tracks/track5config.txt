@@ -1,0 +1,29 @@
+[CHECKPOINTS]
+start = ((-1, -1), -1, (-1, -1), (-1, -1))
+finish = ((-1, -1), -1, (-1, -1), (-1, -1))
+checkpoints = []
+
+[DISPLAY]
+original size = (1200, 900)
+simulator size = (1200, 900)
+
+[TRACK]
+start angle = 0
+
+[CAR]
+speed = 7.0
+max speed = 10.0
+min speed = 5.0
+speed step = 1.0
+length = 45.0
+width = 26.0
+turning angle = 7
+
+[NN]
+learning rate = 0.01
+mutation rate = 0.01
+population = 20
+generations = 1000
+time = 20
+fitness threshold = 0.0
+
