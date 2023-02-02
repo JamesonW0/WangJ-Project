@@ -689,19 +689,40 @@ class Train:
     # end procedure
 
 
+def test():
+    track = pygame.image.load('tracks/track5.png')
+    car = Car(track_config, track)
+    clock = pygame.time.Clock()
+    counter = 0
+    while True:
+        # Exit On Quit Event
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit(0)
+            # end if
+        # next event
+
+        # Drawing here
+        screen.fill('white')
+        car.draw(screen)
+
+        pygame.display.flip()
+        clock.tick(60)  # 60 FPS
+    # end while
+
+
 if __name__ == "__main__":
     # Load track config
     track_config = Config('track1')
-    track_config.set_item('CAR', 'LENGTH', 45.0)
-    track_config.set_item('CAR', 'WIDTH', 26.0)
+    track_config.set_item('CAR', 'LENGTH', 50.0)
+    track_config.set_item('CAR', 'WIDTH', 10.0)
     track_config.set_item('CAR', 'SPEED', 7.0)
-    track_config.set_item('CAR', 'MAX SPEED', 10.0)
+    track_config.set_item('CAR', 'MAX SPEED', 15.0)
     track_config.set_item('CAR', 'MIN SPEED', 5.0)
-    track_config.set_item('CAR', 'SPEED STEP', 1.0)
-    track_config.save()
+    track_config.set_item('CAR', 'SPEED STEP', 0.1)
+    track_config.set_item('CHECKPOINTS', 'START', ((700, 450), 10, (0, 0), (0, 0)))
 
     pygame.init()
     screen = pygame.display.set_mode((1400, 900))
 
-    g = Train('track1', screen)
-    g.run()
+    test()

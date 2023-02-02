@@ -444,7 +444,6 @@ class GUI:
 # end class
 
 
-
 # game function
 def run():
     """Run the GUI"""
