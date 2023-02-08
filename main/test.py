@@ -3,7 +3,7 @@ import sys
 import math
 
 pygame.init()
-screen = pygame.display.set_mode((800, 800))
+screen = pygame.display.set_mode((1400, 900))
 clock = pygame.time.Clock()
 
 car_dimension = (40, 30)

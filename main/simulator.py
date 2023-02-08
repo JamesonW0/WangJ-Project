@@ -466,7 +466,7 @@ class Car:
         radars = self.radars
         return_values = [0, 0, 0, 0, 0]
         for i, radar in enumerate(radars):
-            return_values[i] = int(radar[1] / 30)
+            return_values[i] = int(radar[1])
         # next radar/i
         return return_values
 
@@ -673,7 +673,7 @@ class Train:
         stats = neat.StatisticsReporter()
         self.population.add_reporter(stats)
         try:
-            self.population.run(self.eval_genomes, 1)
+            self.population.run(self.eval_genomes, 1000)
         except pygame.error:
             pygame.init()
 

@@ -20,9 +20,9 @@ width = 60.0
 turning angle = 7
 
 [NN]
-learning rate = 0.01
-mutation rate = 0.01
-population = 20
+learning rate = 100
+mutation rate = 100
+population = 200
 generations = 1000
 time = 20
 fitness threshold = 0.0

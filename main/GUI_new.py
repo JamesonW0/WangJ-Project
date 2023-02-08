@@ -42,7 +42,7 @@ class GUI:
         # tp command, value will be used in eval()
         self.to_page = {'Home': 'self.set_home_page()', 'Start': 'self.set_start_page()',
                         'Tracks': 'self.set_tracks_page()', 'New Training': 'self.new_training()',
-                        'Evaluate': 'self.evaluate()'}
+                        'Evaluate': 'self.evaluate()', 'Tutorial': 'self.set_tutorial_page()'}
         self.import_options = {'Img': 'self.import_file("img")', 'Txt': 'self.import_file("txt")'}
         # set current page to home page
         self.current_page = ''
@@ -173,8 +173,9 @@ class GUI:
         self.current_page = 'Home'
 
         # GIF demo needs to be added
-        self.buttons.append(Button(self.screen, (1230, 220), Colours['black'], 'Start', 'tpStart'))
-        self.buttons.append(Button(self.screen, (1230, 650), Colours['black'], 'Tracks', 'tpTracks'))
+        self.buttons.append(Button(self.screen, (1230, 150), Colours['black'], 'Start', 'tpStart'))
+        self.buttons.append(Button(self.screen, (1230, 450), Colours['black'], 'Tracks', 'tpTracks'))
+        self.buttons.append(Button(self.screen, (1230, 750), Colours['black'], 'Tutorial', 'tpTutorial'))
         self.drawings.append("pygame.draw.line(self.screen, Colours['light_blue'], (1050, 0), (1050, 900), 3)")
     # end procedure
 
@@ -287,6 +288,40 @@ class GUI:
         pygame.display.init()
         self.screen = pygame.display.set_mode((1400, 900))
         self.set_checkpoints_page(track_name)
+    # end procedure
+
+    def set_tutorial_page(self):
+        self.reset()
+
+        self.buttons.append(Button(self.screen, (22, 877), None, '', 'tpHome', img_path='resources/home.png',
+                                   img_size=(40, 40)))
+        # text explanation
+        self.texts.append(('To import a track, go to settings page, and click the import button to import a track. '
+                           'Maximum 5 tracks can be Stored.', text_font_medium, Colours['black'], (700, 75)))
+        self.texts.append(('Start and finish checkpoints must be set to start training. Settings also need to filled.',
+                           text_font_medium, Colours['black'], (700, 150)))
+        self.texts.append(('To set a checkpoint, choose a checkpoint tool and click twice on the track.'
+                           'The midpoint of the line will be the checkpoint.',
+                           text_font_medium, Colours['black'], (700, 225)))
+        self.texts.append(('A line will be formed by connecting two points you clicked.', text_font_medium,
+                           Colours['black'], (700, 255)))
+        self.texts.append(('Both endpoint of the line will be touching the edge of the track.', text_font_medium,
+                           Colours['black'], (700, 285)))
+        self.texts.append(('The midpoint of the line will be the checkpoint.', text_font_medium,
+                           Colours['black'], (700, 315)))
+        self.texts.append(('To delete a checkpoint, simply use the delete tool to click the checkpoint.',
+                           text_font_medium, Colours['black'], (700, 380)))
+        self.texts.append(('To start a new training, go to click the Start button, select a track, and click the new '
+                           'training button', text_font_medium, Colours['black'], (700, 455)))
+        self.texts.append(('To save the current neural network model, click save when you are in a training.',
+                           text_font_medium, Colours['black'], (700, 530)))
+        self.texts.append(('The neural network model will be save to the NN folder under main.',
+                           text_font_medium, Colours['black'], (700, 560)))
+        self.texts.append(('To use a neural network file, select a track, then use evaluation button, finally select '
+                           'the neural network file.', text_font_medium, Colours['black'], (700, 635)))
+    # end procedure
+
+
 
     def get_tracks(self, centre, width, to_settings=False):
         """Get all tracks from the tracks folder, display a error message if more than 5 tracks are found"""
