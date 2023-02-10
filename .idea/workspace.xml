@@ -2,17 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4f819bd5-930f-490f-842d-b18a45f3ccb2" name="Changes" comment="update">
+      <change afterPath="$PROJECT_DIR$/main/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/GUI_new.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/GUI_new.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/NN/NN2config.txt" beforeDir="false" afterPath="$PROJECT_DIR$/main/NN/NN2config.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/simulator.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/simulator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/track.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/track.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/tracks/track1config.txt" beforeDir="false" afterPath="$PROJECT_DIR$/main/tracks/track1config.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/tracks/track2config.txt" beforeDir="false" afterPath="$PROJECT_DIR$/main/tracks/track2config.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/tracks/track3config.txt" beforeDir="false" afterPath="$PROJECT_DIR$/main/tracks/track3config.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/tracks/track4config.txt" beforeDir="false" afterPath="$PROJECT_DIR$/main/tracks/track4config.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/tracks/track5config.txt" beforeDir="false" afterPath="$PROJECT_DIR$/main/tracks/track5config.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/NN/NN-checkpoint-T1-G15-1676070340.9277272" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/NN/NN-checkpoint-T1-G5-1675890626.8936567" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/neat-checkpoint-19" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/neat-checkpoint-9" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
