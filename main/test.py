@@ -18,11 +18,6 @@ angle = 0
 centre = [400, 400]
 corners = []
 
-for internal_angle in corner_ref[0]:
-    # calculate the corners given the data
-    delta_x = math.cos(math.radians(angle) + internal_angle) * corner_ref[1]
-    delta_y = math.sin(math.radians(angle) + internal_angle) * corner_ref[1]
-    corners.append([centre[0] + delta_x, centre[1] + delta_y])
 
 while True:
     # Exit On Quit Event

@@ -277,7 +277,7 @@ class Config:
         if len(checkpoint_0) != 0:
             checkpoint_0 = checkpoint_0[0][0]
             start = self.get_item('CHECKPOINTS', 'START')[0]
-            start_angle = int(math.degrees(math.atan((checkpoint_0[1] - start[1])/(checkpoint_0[0] - start[0]))))
+            start_angle = - int(math.degrees(math.atan2((checkpoint_0[1] - start[1]), (checkpoint_0[0] - start[0]))))
             self.set_item('TRACK', 'START ANGLE', start_angle)
 
         with open(self.track_config_path, 'w') as file:
@@ -497,7 +497,7 @@ class Car:
             self.old_dist_to_checkpoint = math.sqrt((self.centre[0] - self.checkpoints[0][0][0]) ** 2 +
                                                     (self.centre[1] - self.checkpoints[0][0][1]) ** 2)  # Pythagoras
             self.new_dist_to_checkpoint = 0
-        return reward
+        return -1
     # end function
 
     def change_speed(self, delta):
@@ -692,6 +692,7 @@ class Train:
 def test():
     track = pygame.image.load('tracks/track5.png')
     car = Car(track_config, track)
+
     clock = pygame.time.Clock()
     counter = 0
     while True:
@@ -701,11 +702,21 @@ def test():
                 sys.exit(0)
             # end if
         # next event
+        counter += 1
+        if counter <= 100:
+            car.change_speed(-0.1)
+        elif counter <= 200:
+            car.change_speed(0.1)
+        elif counter <= 300:
+            car.change_direction(1)
+        elif counter <= 400:
+            car.change_direction(-1)
+
 
         # Drawing here
         screen.fill('white')
         car.draw(screen)
-
+        car.update()
         pygame.display.flip()
         clock.tick(60)  # 60 FPS
     # end while
@@ -713,14 +724,15 @@ def test():
 
 if __name__ == "__main__":
     # Load track config
-    track_config = Config('track1')
-    track_config.set_item('CAR', 'LENGTH', 50.0)
-    track_config.set_item('CAR', 'WIDTH', 10.0)
-    track_config.set_item('CAR', 'SPEED', 7.0)
-    track_config.set_item('CAR', 'MAX SPEED', 15.0)
-    track_config.set_item('CAR', 'MIN SPEED', 5.0)
+    track_config = Config('track5')
+    track_config.set_item('CAR', 'LENGTH', 45.0)
+    track_config.set_item('CAR', 'WIDTH', 25.0)
+    track_config.set_item('CAR', 'SPEED', 2.0)
+    track_config.set_item('CAR', 'MAX SPEED', 3.0)
+    track_config.set_item('CAR', 'MIN SPEED', 1.0)
     track_config.set_item('CAR', 'SPEED STEP', 0.1)
-    track_config.set_item('CHECKPOINTS', 'START', ((700, 450), 10, (0, 0), (0, 0)))
+    track_config.set_item('TRACK', 'START ANGLE', 0)
+    track_config.set_item('CHECKPOINTS', 'START', ((170, 450), 10, (0, 0), (0, 0)))
 
     pygame.init()
     screen = pygame.display.set_mode((1400, 900))

@@ -321,8 +321,6 @@ class GUI:
                            'the neural network file.', text_font_medium, Colours['black'], (700, 635)))
     # end procedure
 
-
-
     def get_tracks(self, centre, width, to_settings=False):
         """Get all tracks from the tracks folder, display a error message if more than 5 tracks are found"""
         global text_font_medium  # get font from global scope
@@ -421,7 +419,7 @@ class GUI:
                 for i in range(1, 6):
                     if i not in track_no:
                         shutil.copyfile(file_path, os.path.join('tracks', 'track' + str(i) + file_path[-4:]))
-                        file_name = 'track' + str(i) + file_path[-4:]
+                        file_name = 'track' + str(i)
                         self.set_checkpoints_page(file_name)
                         break
                     # end if

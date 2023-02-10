@@ -596,116 +596,22 @@ class Train:
         # next car/i
     # end procedure
 
-    def eval_genomes(self, genomes, config):
-        # empty the car and net lists for the next generation
-        self.cars.clear()
-        self.nets.clear()
 
-        # create car instance and net for each genome
-        for i, genome in genomes:
-            net = neat.nn.FeedForwardNetwork.create(genome, config)
-            self.nets.append(net)
-            genome.fitness = 0
-            self.cars.append(Car(self.track_config, self.track))
-        # next genome/i
-
-        # update generation counter and set time counter
-        self.generation_no += 1
-        start_time = time.time()
-
-        # pygame
-        clock = pygame.time.Clock()
-        buttons = [Button(self.screen, (1300, 200), (0, 0, 0), 'Save', 'save', button_font_medium),
-                   Button(self.screen, (1300, 450), (0, 0, 0), 'Exit', 'exit', button_font_medium),
-                   Button(self.screen, (1300, 700), (0, 0, 0), 'Save & Exit', 'save&exit', button_font_small)]
-        while True:
-            # Exit On Quit Event
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    sys.exit(0)
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # check for buttons
-                    for button in buttons:
-                        if button.update(event.pos):
-                            action = button.clicked()
-                            if action == 'save':
-                                self.save_checkpoint(self.nn_config, self.population.population,
-                                                     self.population.species, self.generation_no)
-                            elif action == 'exit':
-                                raise pygame.error
-                            elif action == 'save&exit':
-                                self.save_checkpoint(self.nn_config, self.population.population,
-                                                     self.population.species, self.generation_no)
-                                raise pygame.error
-                            # end if
-                        # end if
-                    # next button
-                # end if
-            # next event
-
-            self.eval_choice()  # get action from NN and pass it to cars
-
-            # get alive and pass the reward to NN
-            still_alive = False
-            for i, car in enumerate(self.cars):
-                if car.get_alive():
-                    still_alive = True
-                    car.update()
-                    genomes[i][1].fitness += car.get_reward()
-                # end if
-            # next car/i
-
-            # end the generation if no alive or time exceeds
-            if not still_alive or time.time() - start_time >= self.max_time:
-                break
-            # end if
-
-            # Drawing here
-            self.screen.fill('white')
-            self.screen.blit(self.track, (0, 0))
-            for car in self.cars:
-                if car.get_alive():
-                    car.draw(self.screen)
-                # end if
-            # next car
-
-            pygame.draw.line(self.screen, (143, 170, 220), (1203, 0), (1203, 900), 3)
-            for button in buttons:
-                button.draw()
-            # next button
-
-            pygame.display.flip()
-            clock.tick(60)  # 60 FPS
-        # end while
-    # end procedure
-
-    def run(self):
-        # Create Population And Add Reporters
-        self.population = neat.Population(self.nn_config)
-        self.population.add_reporter(neat.StdOutReporter(True))
-        stats = neat.StatisticsReporter()
-        self.population.add_reporter(stats)
-        self.population.add_reporter(neat.Checkpointer(10))
-
-        # Run Simulation For A Maximum of 1000 Generations
-        try:
-            self.population.run(self.eval_genomes, 1000)
-        except pygame.error:
-            pygame.init()
-
-
-
+pygame.init()
+screen = pygame.display.set_mode((1400, 900))
+clock = pygame.time.Clock()
+car = Car()
 if __name__ == "__main__":
     # Load track config
-    track_config = Config('track2')
-    track_config.set_item('CAR', 'LENGTH', 40.0)
-    track_config.set_item('CAR', 'WIDTH', 20.0)
-    track_config.set_item('CAR', 'SPEED', 0)
-    track_config.set_item('CAR', 'MAX SPEED', 0)
-    track_config.set_item('CAR', 'MIN SPEED', 0)
-    track_config.set_item('CAR', 'SPEED STEP', 0)
-    track_config.set_item('CHECKPOINTS', 'START', ((200, 800), 10, (0, 0), (0, 0)))
+    while True:
+        # Exit On Quit Event
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit(0)
+            # end if
+            # next event
 
-    pygame.init()
-    screen = pygame.display.set_mode((1400, 900))
+        screen.fill('white')
 
-    train
+        pygame.display.flip()
+        clock.tick(60)

@@ -8,7 +8,7 @@ original size = (1200, 900)
 simulator size = (1200, 900)
 
 [TRACK]
-start angle = -3
+start angle = 3
 
 [CAR]
 speed = 10.0
@@ -16,7 +16,7 @@ max speed = 15.0
 min speed = 7.0
 speed step = 0.1
 length = 45.0
-width = 26.0
+width = 25.0
 turning angle = 7
 
 [NN]
