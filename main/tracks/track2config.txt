@@ -1,7 +1,7 @@
 [CHECKPOINTS]
 start = ((1099.4605263157894, 412.5), 105.03635104834538, (1100.7105263157894, 460), (1098.2105263157894, 365))
 finish = ((193.7093023255814, 445.5), 107.02893064808849, (194.8372093023256, 494), (192.58139534883722, 397))
-checkpoints = [((759.031746031746, 424.0), 106.21344094102749, (755.984126984127, 472), (762.0793650793651, 376))]
+checkpoints = []
 
 [DISPLAY]
 original size = (1200, 900)
@@ -15,14 +15,14 @@ speed = 10.0
 max speed = 15.0
 min speed = 5.0
 speed step = 1.0
-length = 60.0
-width = 60.0
+length = 45
+width = 25
 turning angle = 7
 
 [NN]
 learning rate = 0.1
 mutation rate = 0.1
-population = 2
+population = 20
 generations = 1000
 time = 20
 fitness threshold = 0.0

@@ -497,7 +497,7 @@ class Car:
             self.old_dist_to_checkpoint = math.sqrt((self.centre[0] - self.checkpoints[0][0][0]) ** 2 +
                                                     (self.centre[1] - self.checkpoints[0][0][1]) ** 2)  # Pythagoras
             self.new_dist_to_checkpoint = 0
-        return -1
+        return reward
     # end function
 
     def change_speed(self, delta):
